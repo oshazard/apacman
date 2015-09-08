@@ -1,18 +1,21 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.1"
+version="2.2"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Built-in ABS support (improved)
+# * -W           View AUR comments (WIP)
 # * Signed package support (improved)
 # * Split package support
 # * AUR4 support
 # * Config file support
-# * Built-in ABS support (WIP)
 # * Workaround for running as root
 # * Saves AUR packages to /var/cache/apacman/pkg
 # * Uses AUR package cache directory if applicable
+# * --asdeps      install AUR packages non-explicitly
+# * --asexplicit  install AUR packages explicitly
 # * --keepkeys    do not remove imported PGP keys
 # * --purgekeys   remove imported PGP keys
 # * --legacy      backwards compatability for AUR3 (deprecated)
@@ -64,8 +67,12 @@ tmpdir="${TMPDIR:-/tmp}/apacmantmp-$UID"
 editor="vi"
 [[ $EDITOR ]] && editor="$EDITOR"
 
+pager="less -R"
+[[ $PAGER ]] && pager="$PAGER"
+
 RPCURL="https://aur.archlinux.org/rpc.php?type"
 PKGURL="https://aur.archlinux.org"
+WEBURL="https://www.archlinux.org"
 ABSURL="rsync.archlinux.org"
 legacy="0"
 
@@ -125,7 +132,10 @@ usage() {
   echo '    -Si          - outputs info for package'
   echo '    -G           - download and extract aur tarball only'
   echo '    -L           - list installed packages by size'
+  echo '    -W           - view web comments for package'
   echo
+  echo '    --asdeps     - install AUR packages marked as dependencies'
+  echo '    --asexplicit - install AUR packages marked as explicit'
   echo '    --auronly    - only do actions for AUR'
   echo '    --buildonly  - create but do not install packages'
   echo '    --config     - specify alternate config file (default: /etc/apacman.conf)'
@@ -172,8 +182,8 @@ infoconf() {
     varstatus $i
   done
 
-  vars="auronly buildonly cachevcs ignorearch keepkeys legacy needed noaur noconfirm noedit"
-  vars="$vars nofail preview progress purgebuild purgekeys quiet skipcache skipinteg skiptest warn"
+  vars="asdeps asexplicit auronly buildonly cachevcs ignorearch keepkeys legacy needed noaur noconfirm"
+  vars="$vars noedit nofail preview progress purgebuild purgekeys quiet skipcache skipinteg skiptest warn"
   for j in $vars; do
     varstatus $j
   done
@@ -188,6 +198,18 @@ runasroot() {
   else
     echo -n "root "
     su -c "$(printf '%q ' "$@")"
+  fi
+}
+
+# debugging for curl ($1 is curl exit code)
+curlyq() {
+  if [ $1 -ne 0 -a $1 -ne 7 ]; then
+    echo -e "${COLOR6}notice:${ENDCOLOR} curl exited with code $1"
+    if deptest man; then
+      curlman=$(man curl | sed '1,/^EXIT CODES/d' | grep " $1 ")
+      curlman=$(echo "$curlman" | awk -F "    " '{print $3}' | sed 's/^[ \t]*//')
+      echo -e "${COLOR3}manpage:${ENDCOLOR} $curlman"
+    fi
   fi
 }
 
@@ -418,11 +440,34 @@ absrepo() {
   $pacmanbin -Si -- "$1" 2>/dev/null | grep ^Repository | awk '{print $NF}' | awk NR==1
 }
 
+# find pkgbase name for split packages ($1 is package repository, $2 is package name)
+absbase() {
+  webpkg=$(curl -Lfs "$WEBURL/packages/$1/${makearch}/$2/"); cstatus=$?
+  if [ $cstatus -eq 22 ]; then
+    webpkg=$(curl -Lfs "$WEBURL/packages/$1/any/$2/"); cstatus=$?
+  fi
+
+  if [ $cstatus -eq 0 ]; then
+    echo "$webpkg" | sed -e 's/<[^>]\+>/ /g' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e '/^$/d' | grep -A 1 "^Base Package:" | sed '1d'
+  fi
+}
+
 # downloads source files ($1 is package repository, $2 is package name)
 abslink() {
   deptest rsync || err "${COLOR7}error:${ENDCOLOR} $option requires \`rsync'"
   rflags="-mrt --info=progress2 --no-motd --delete-after --no-p --no-o --no-g"
   rsync $rflags --include=/$1{,/$2} --exclude=/{$1/,}* ${ABSURL}::abs/{${makearch},any}/ .
+
+  # try again
+  if [ ! -d "$1/$2" ]; then
+    pkgbase=$(absbase "$1" "$2")
+    if [[ $pkgbase ]]; then
+      [ -d "$1/$pkgbase" ] && rm -r "$1/$pkgbase"
+      echo -e "${COLOR5}--> ${COLOR1}selected base: $pkgbase${ENDCOLOR}"
+      rsync $rflags --include=/$1{,/$pkgbase} --exclude=/{$1/,}* ${ABSURL}::abs/{${makearch},any}/ .
+      mv "$1/$pkgbase" "$1/$2"
+    fi
+  fi
 }
 
 # downloads pkgbuild ($1), edits if $2 is set
@@ -432,8 +477,10 @@ pkginfo() {
     basepath=$(echo ${pkgpath##*/} | awk -F . '{print $1}')
     if [[ $legacy == 1 ]]; then
       curl -Lfs "${pkgpath%/*}/PKGBUILD" > "$tmpdir/$1.PKGBUILD"
+      cstatus=$?; curlyq "$cstatus"
     else
       curl -Lfs "${pkgpath%/*/*}/plain/PKGBUILD?h=${basepath}" > "$tmpdir/$1.PKGBUILD"
+      cstatus=$?; curlyq "$cstatus"
     fi
 
     if [[ $2 ]]; then
@@ -615,6 +662,7 @@ aurinstall() {
     mkdir -p "$builddir"
     cd "$builddir"
     curl -Lfs "$(pkglink $1)" > "$1.tar.gz"
+    cstatus=$?; curlyq "$cstatus"
     mkdir "$1"
     tar xf "$1.tar.gz" -C "$1" --strip-components=1
     cd "$1"
@@ -944,6 +992,9 @@ while [[ $1 ]]; do
     -S*u*) option=update ; pacmanarg="$1" ;;
     '-G') option=download ;;
     -L*) option=list ; pacmanarg="${1//-L}" ;;
+    -W*) option=web ; pacmanarg="${1//-W}" ;;
+    '--asdeps') asdeps='1' PACOPTS+=("--asdeps") ; export asdeps; unset asexplicit ;;
+    '--asexplicit') asexplicit='1' PACOPTS+=("--asexplicit"); export asexplicit; unset asdeps ;;
     '--auronly') auronly='1' ; unset noaur ;;
     '--buildonly') buildonly='1' ;;
     '--cachevcs') cachevcs='1' ;;
@@ -994,12 +1045,6 @@ mkdir -p "$tmpdir"
 
 # Determine architecture
 makearch=$(grep ^CARCH= "$makepkgconf" 2>/dev/null | grep -o -e =.*[0-9A-Za-z] | sed 's/^="//');
-
-# AUR4 compatibility
-#if [[ $legacy != 1 ]]; then
-#  RPCURL=$(echo "$RPCURL" | sed 's/\./4&/1')
-#  PKGURL=$(echo "$PKGURL" | sed 's/\./4&/1')
-#fi
 
 # Check for new packages
 if [[ $quickcheck == 1 ]]; then
@@ -1138,17 +1183,26 @@ if [[ $option = download ]]; then
     pkgrepo=$(absrepo "$package")
     abslink "$pkgrepo" "$package"
     [ -d "$package" ] && rm -r "$package"
-    mv "$pkgrepo/$package" "$package"
-    rmdir "$pkgrepo"
-    ls "$package" | awk -v package="$package" '{print package"/"$0}'
+    if [ -d "$pkgrepo/$package" ]; then
+      mv "$pkgrepo/$package" "$package"
+      rmdir "$pkgrepo"
+      ls "$package" | awk -v package="$package" '{print package"/"$0}'
+    else
+      err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$package'"
+    fi
   done
 
   [[ $pkglist ]] && echo -e "${COLOR6}notice:$ENDCOLOR sourcing from ${COLOR3}[AUR]$ENDCOLOR"
   for package in "${pkglist[@]}"; do
     curl -Lfs "$(pkglink $package)" > "$package.tar.gz"
+    cstatus=$?; curlyq "$cstatus"
     [ -d "$package" ] && rm -r "$package"
-    mkdir "$package"
-    tar xvf "$package.tar.gz" -C "$package" --strip-components=1
+    if [ -f "$package.tar.gz" ]; then
+      mkdir "$package"
+      tar xvf "$package.tar.gz" -C "$package" --strip-components=1
+    else
+      err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$package'"
+    fi
   done
 fi
 
@@ -1324,6 +1378,31 @@ if [[ $option = info ]]; then
       echo
     else
       err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
+    fi
+  done
+fi
+
+# Web Comments (-W) handling
+if [[ $option = web ]]; then
+  sourcemakepkgconf
+  for package in "${packageargs[@]}"; do
+    if ! [[ $auronly ]] && existsinpacman "$package"; then
+      echo -e "${COLOR7}error:${ENDCOLOR} comments unavailable for non-AUR package '$package'"
+    elif ! [[ $noaur ]]; then # Check to see if it is in the aur
+      curl -Lfs "$PKGURL/packages/$package/?comments=all" > "$tmpdir/$package.html"
+      cstatus=$?; curlyq "$cstatus"
+      [[ -s "$tmpdir/$package.html" ]] || err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
+
+      separator="======================================"
+      header="${COLOR4}*******************************${ENDCOLOR}"
+      comments="$(sed -e 's/<[^>]\+>/ /g' -e 's/^[ \t]*//' -e '/^$/d' "$tmpdir/$package.html")"
+      comments="$(sed "s/^Comment by/$separator\n&/" <<< "$comments")"
+      comments="$(sed '1,/Latest Comments/d' <<< "$comments" | tac | sed '1,3d' | tac)"
+      echo -en "$header\n      $package\n$header\n\n" > "$tmpdir/$package.txt"
+      echo "$comments" >> "$tmpdir/$package.txt"
+      $pager "$tmpdir/$package.txt"
+    else
+      echo -e "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
     fi
   done
 fi

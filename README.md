@@ -1,11 +1,14 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper and pacman wrapper forked from packer
+ArchLinux User Repository (AUR) helper and pacman wrapper forked from [packer](https://github.com/keenerd/packer)
 
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
 
-Features:
+Changelog:
+* **NEW** -W parameter to view package comments
+* **NEW** sanity checks for curl with debugging
+* **NEW** fixes for ABS
 * **NEW** improved signed package support
 * **NEW** --keepkeys parameter stores PGP keys
 * **NEW** --purgekeys parameter removes trusted PGP keys

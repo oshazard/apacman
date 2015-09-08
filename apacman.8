@@ -2,12 +2,12 @@
 .\"     Title: apacman
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 09/05/2015
+.\"      Date: 09/07/2015
 .\"    Manual: apacman Manual
 .\"    Source: apacman
 .\"  Language: English
 .\"
-.TH "APACMAN" "8" "09/05/2015" "apacman" "apacman Manual"
+.TH "APACMAN" "8" "09/07/2015" "apacman" "apacman Manual"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -57,6 +57,11 @@ Download and extract ABS and AUR package tarballs, but don\(cqt install anything
 \fB\-L\fR
 .RS 4
 List installed packages by size (replacement for pacsysclean\&.)
+.RE
+.PP
+\fB\-W\fR
+.RS 4
+View AUR comments\&.
 .RE
 .PP
 \fB\-h\fR
@@ -308,7 +313,7 @@ By default VCS package versions are compared via PKGBUILD in AUR (unless \-\-cac
 .sp
 apacman output will be colorized unless the environmental variable COLOR is set to `NO'.
 .sp
-To manually edit files, packer uses the EDITOR variable\&. If EDITOR is not set then the default editor is vi\&.
+To manually edit files, apacman uses the EDITOR variable\&. If EDITOR is not set then the default editor is vi\&.
 .sp
 Packages are built in the TMPDIR path\&. If the TMPDIR variable is not set then the default path is /tmp
 .sp
