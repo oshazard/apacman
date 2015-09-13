@@ -1,10 +1,12 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.2"
+version="2.3"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Improved support for virtual packages
+# * Improved -U handling
 # * Built-in ABS support (improved)
 # * -W           View AUR comments (WIP)
 # * Signed package support (improved)
@@ -312,7 +314,47 @@ existsinpacman() {
 providedinpacman() {
   unset providepkg
   IFS=$'\n' read -rd '' -a providepkg < <($pacmanbin -Ssq -- "^$1$")
+  selectprovider $1 "${providepkg[@]}"
   [[ -n $providepkg ]]
+}
+
+# Prompts options for virtual packages, $1 is package, $@ is array of packages
+selectprovider()
+{
+  virtpkg=$1
+  shift
+  virtual=($@)
+  virtnum="${#virtual[@]}"
+  if [[ $virtnum -eq 0 ]]; then
+    return 1
+  elif [[ $virtnum -eq 1 ]]; then
+   providepkg="$virtual"
+  elif [[ $# -gt 1 ]]; then
+    # Multiple providers
+    echo -e "${COLOR5}:: ${COLOR1}There are $virtnum packages that provide $virtpkg:${ENDCOLOR}"
+    n=1
+    for v in ${virtual[@]}; do
+      echo "${n}) $v";
+      n=$((n+1))
+    done
+    echo
+    echo -n "Enter a selection (default=1): "
+    read -r
+
+    # Parse answer
+    if [[ $REPLY ]]; then
+      for num in $REPLY; do
+        if [[ $num -le $virtnum ]] && [[ $num -ge 1 ]]; then
+          num=$((num-1))
+          providepkg="${virtual[$num]}"
+        else
+          err "Number \`$num' is not assigned to any of the packages."
+        fi
+      done
+    else
+      providepkg="$virtual"
+    fi
+  fi
 }
 
 # Tests whether $1 exists in a pacman group
@@ -323,6 +365,12 @@ existsinpacmangroup() {
 # Tests whether $1 exists locally
 existsinlocal() {
   $pacmanbin -Qq -- "$1" &>/dev/null
+}
+
+# Scrapes .PKGINFO from local package ($1 is filename)
+scrapelocaldeps() {
+  [[ -f "$1" ]] || err "${COLOR7}error:${ENDCOLOR} '$1': could not access file"
+  dependencies=( $(tar -x .PKGINFO -O -f "$1" 2>/dev/null | grep "^depend =" | awk -F " = " '{print $2}') )
 }
 
 # Scrapes the aur deps from PKGBUILDS and puts in globally available dependencies array
@@ -765,6 +813,27 @@ aurinstall() {
   fi
 }
 
+# Install local packages (-U)
+localhandling() {
+  pacmanarg="$1"
+  shift
+
+  for arg in $@; do
+    if [ -f "$arg" ]; then
+      localpkg+=("$arg")
+    else
+      args+=("$arg")
+    fi
+  done
+
+  for pkg in ${localpkg[@]}; do
+    scrapelocaldeps $pkg
+    $0 -S "${args[@]}" ${dependencies[@]} --asdeps --localinstall --needed
+    echo -e "${COLOR3}notice:${ENDCOLOR} installing $pkg"
+    runasroot $pacmanbin $pacmanarg "$pkg"
+  done
+}
+
 # Goes through all of the install tests and execution ($@ is packages to be installed)
 installhandling() {
   packageargs=("$@")
@@ -775,6 +844,8 @@ installhandling() {
     # Determine whether package is in pacman repos
     if ! [[ $auronly ]] && existsinpacman "$package"; then
       pacmanpackages+=("$package")
+    elif ! [[ $auronly ]] && providedinpacman "$package"; then
+      pacmanpackages+=("$providepkg")
     elif ! [[ $auronly ]] && existsinpacmangroup "$package"; then
       pacmanpackages+=("$package")
     elif ! [[ $noaur ]] && existsinaur "$package"; then
@@ -841,7 +912,8 @@ installhandling() {
       localversion="$($pacmanbin -Qs "$pkg" | grep -F "local/$pkg " | cut -d ' ' -f 2)"
       if ! aurversionisnewer "$pkg" "$localversion"; then
         if [ "$needed" = "1" ]; then
-          echo -e "${COLOR6}notice:$ENDCOLOR $pkg-$localversion is up to date -- skipping" 
+          [[ $localinstall ]] ||
+          echo -e "${COLOR6}notice:$ENDCOLOR $pkg-$localversion is up to date -- skipping"
           aurtargets=(${aurtargets[@]/$pkg/});
         else
           echo -e "${COLOR6}warning:$ENDCOLOR $pkg-$localversion is up to date -- reinstalling"
@@ -858,11 +930,14 @@ installhandling() {
   done
     
   # Prompt for aur packages and their dependencies
-  echo
-  if [[ $aurdepends ]]; then
-    num="$((${#aurdepends[@]}+${#aurtargets[@]}))"
+  num="$((${#aurdepends[@]}+${#aurtargets[@]}))"
+  if [[ $num -eq 0 ]] && [[ $localinstall ]]; then
+    true
+  elif [[ $aurdepends ]]; then
+    echo
     echo -e "${COLOR6}Aur Targets    ($num):${ENDCOLOR} ${aurdepends[@]} ${aurtargets[@]}"
   else 
+    echo
     echo -e "${COLOR6}Aur Targets    ($((${#aurtargets[@]}))):${ENDCOLOR} ${aurtargets[@]}"
   fi
   if [[ $pacmandepends ]]; then
@@ -875,7 +950,9 @@ installhandling() {
   pkgnum="${#pacmandepends[@]}"
   totalcount="$((${#aurdepends[@]}+${#aurtargets[@]}+${#pacmandepends[@]}))"
   if [ "$totalcount" = "0" ]; then
-    echo -e "${COLOR5}==>$ENDCOLOR nothing to do"; exit 0;
+    [[ $localinstall ]] ||
+    echo -e "${COLOR5}==>$ENDCOLOR nothing to do"
+    exit 0
   fi
 
   # Prompt to proceed
@@ -974,6 +1051,8 @@ nap() {
 pacwrap() {
   if [[ $1 = -Q* ]]; then
     $pacmanbin "$@";
+  elif [[ $1 = -U* ]]; then
+    localhandling "$@"
   else
     runasroot $pacmanbin "$@";
   fi;
@@ -1004,6 +1083,7 @@ while [[ $1 ]]; do
     '--ignorearch') MAKEPKGOPTS+=("--ignorearch");;
     '--keepkeys') keepkeys='1' ; export keepkeys ;;
     '--legacy') legacy='1' ;;
+    '--localinstall') localinstall='1' ;;
     '--needed') needed='1' PACOPTS+=("--needed");;
     '--noaur') noaur='1' ; unset auronly ;;
     '--noconfirm') noconfirm='1' PACOPTS+=("--noconfirm") ; export noconfirm ;;

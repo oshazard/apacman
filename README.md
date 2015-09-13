@@ -3,9 +3,14 @@ apacman
 
 ArchLinux User Repository (AUR) helper and pacman wrapper forked from [packer](https://github.com/keenerd/packer)
 
+![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)
+![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.2/total.svg)
+
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
 
 Changelog:
+* **NEW** improved virtual package support
+* **NEW** improved -U handling
 * **NEW** -W parameter to view package comments
 * **NEW** sanity checks for curl with debugging
 * **NEW** fixes for ABS
