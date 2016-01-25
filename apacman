@@ -830,8 +830,8 @@ localhandling() {
     scrapelocaldeps $pkg
     $0 -S "${args[@]}" ${dependencies[@]} --asdeps --localinstall --needed
     echo -e "${COLOR3}notice:${ENDCOLOR} installing $pkg"
-    runasroot $pacmanbin $pacmanarg "$pkg"
   done
+  runasroot $pacmanbin $pacmanarg "${localpkg[@]}"
 }
 
 # Goes through all of the install tests and execution ($@ is packages to be installed)
