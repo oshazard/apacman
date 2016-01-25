@@ -1079,6 +1079,7 @@ while [[ $1 ]]; do
     '--cachevcs') cachevcs='1' ;;
     '--config') config='1' ; apacmanconf="$2" ; shift ;;
     '--devel') devel='1' ;;
+    '--force') force='1' PACOPTS+=("--force");;
     '--ignore') ignorearg="$2" ; PACOPTS+=("--ignore" "$2") ; shift ;;
     '--ignorearch') MAKEPKGOPTS+=("--ignorearch");;
     '--keepkeys') keepkeys='1' ; export keepkeys ;;
