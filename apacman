@@ -370,7 +370,7 @@ existsinlocal() {
 # Scrapes .PKGINFO from local package ($1 is filename)
 scrapelocaldeps() {
   [[ -f "$1" ]] || err "${COLOR7}error:${ENDCOLOR} '$1': could not access file"
-  dependencies=( $(tar -x .PKGINFO -O -f "$1" 2>/dev/null | grep "^depend =" | awk -F " = " '{print $2}') )
+  dependencies=( $(pacman -T $(tar -x .PKGINFO -O -f "$1" 2>/dev/null | grep "^depend =" | awk -F " = " '{print $2}')) )
 }
 
 # Scrapes the aur deps from PKGBUILDS and puts in globally available dependencies array
@@ -828,10 +828,12 @@ localhandling() {
 
   for pkg in ${localpkg[@]}; do
     scrapelocaldeps $pkg
-    $0 -S "${args[@]}" ${dependencies[@]} --asdeps --localinstall --needed
-    echo -e "${COLOR3}notice:${ENDCOLOR} installing $pkg"
-    runasroot $pacmanbin $pacmanarg "$pkg"
+    echo -e "${COLOR3}notice:${ENDCOLOR} installing dependencies for $pkg"
+    if [[ $dependencies ]]; then
+        $0 -S "${args[@]}" ${dependencies[@]} --asdeps --localinstall --needed
+    fi
   done
+  runasroot $pacmanbin $pacmanarg "${localpkg[@]}"
 }
 
 # Goes through all of the install tests and execution ($@ is packages to be installed)
