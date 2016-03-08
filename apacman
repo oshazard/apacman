@@ -72,7 +72,7 @@ editor="vi"
 pager="less -R"
 [[ $PAGER ]] && pager="$PAGER"
 
-RPCURL="https://aur.archlinux.org/rpc.php?type"
+RPCURL="https://aur.archlinux.org/rpc/?v=5&type"
 PKGURL="https://aur.archlinux.org"
 WEBURL="https://www.archlinux.org"
 ABSURL="rsync.archlinux.org"
@@ -221,7 +221,8 @@ infoparser() {
   pkgver=$(jshon -Qe results < $1 -Qe Version -u)
   pkgbase=$(jshon -Qe results < $1 -Qe PackageBase -u)
   url=$(jshon -Qe results < $1 -Qe URL -u)
-  license=($(jshon -Qe results < $1 -Qe License -u))
+  licnum=$(($(jshon -Qe results < $1 -a -e License -l)-1))
+  license=$(while [ ${licnum} -ge '0' ]; do jshon -e results < $1 -a -e License -e ${licnum} -u ; ((licnum-=1)) ; done)
   groups=$(jshon -Qe results < $1 -Qe PackageBase -u)
 }
 
@@ -481,7 +482,7 @@ rpcinfo() {
 
 pkglink() {
   rpcinfo $1
-  echo "${PKGURL}$(jshon -Q -e results -e URLPath -u < "$tmpdir/$1.info")"
+  echo "${PKGURL}$(jshon -Q -e results -a -e URLPath -u < "$tmpdir/$1.info")"
 }
 
 absrepo() {
@@ -545,7 +546,7 @@ aurversionisnewer() {
   rpcinfo "$1"
   unset aurversion
   if existsinaur "$1"; then
-    aurversion="$(jshon -Q -e results -e Version -u < "$tmpdir/$1.info")"
+    aurversion="$(jshon -Q -e results -a -e Version -u < "$tmpdir/$1.info")"
     if [[ "$(LC_ALL=C vercmp "$aurversion" "$2")" -gt 0  ]]; then
       return 0
     fi
@@ -555,7 +556,7 @@ aurversionisnewer() {
 
 isoutofdate() {
   rpcinfo "$1"
-  [[ "$(jshon -Q -e results -e OutOfDate -u < "$tmpdir/$1.info")" = "1" ]]
+  [[ "$(jshon -Q -e results -a -e OutOfDate -u < "$tmpdir/$1.info")" = "1" ]]
 }
 
 # List bundle package files
