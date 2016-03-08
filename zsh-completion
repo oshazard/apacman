@@ -1,6 +1,6 @@
 #compdef apacman
 
-# copy this file to /usr/share/zsh/site-functions/_pacman
+# copy this file to /usr/share/zsh/site-functions/_apacman
 
 typeset -A opt_args
 setopt extendedglob
@@ -321,7 +321,7 @@ _pacman_get_command() {
 }
 
 # main dispatcher
-_pacman_zsh_comp() {
+_apacman_zsh_comp() {
 	local -a args cmds;
 	local tmp
 	args=( ${${${(M)words:#-*}#-}:#-*} )
@@ -448,14 +448,8 @@ _pacman_zsh_comp() {
 
 _pacman_comp() {
 	case "$service" in
-		makepkg)
-			_makepkg "$@"
-			;;
-		pacman-key)
-			_pacman_key "$@"
-			;;
-		pacman)
-			_pacman_zsh_comp "$@"
+		apacman)
+			_apacman_zsh_comp "$@"
 			;;
 		*)
 			_message "Error"
@@ -463,4 +457,4 @@ _pacman_comp() {
 	esac
 }
 
-_pacman_comp "$@"
+_apacman_comp "$@"

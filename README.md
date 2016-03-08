@@ -1,7 +1,7 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper and pacman wrapper forked from [packer](https://github.com/keenerd/packer)
+ArchLinux User Repository (AUR) helper and pacman wrapper [forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
 
 ![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)
 ![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.2/total.svg)
@@ -9,16 +9,17 @@ ArchLinux User Repository (AUR) helper and pacman wrapper forked from [packer](h
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
 
 Changelog:
-* **NEW** improved virtual package support
-* **NEW** improved -U handling
-* **NEW** -W parameter to view package comments
-* **NEW** sanity checks for curl with debugging
-* **NEW** fixes for ABS
-* **NEW** improved signed package support
-* **NEW** --keepkeys parameter stores PGP keys
-* **NEW** --purgekeys parameter removes trusted PGP keys
-* **NEW** fix for piping output
-* **NEW** fix for yes/no dialog
+* **NEW** merged pull requests for AUR5 support
+* improved virtual package support
+* improved -U handling
+* -W parameter to view package comments
+* sanity checks for curl with debugging
+* fixes for ABS
+* improved signed package support
+* --keepkeys parameter stores PGP keys
+* --purgekeys parameter removes trusted PGP keys
+* fix for piping output
+* fix for yes/no dialog
 * Split package support and shared source
 * Improved AUR4 support
 * Bug fix for AUR4 -Si
