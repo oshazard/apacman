@@ -1,10 +1,14 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper and pacman wrapper [forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
+ArchLinux User Repository (AUR) helper ![AUR](https://img.shields.io/aur/votes/apacman.svg) and pacman wrapper [forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
 
-![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)
-![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.2/total.svg)
+**Total:**   ![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)
+
+**Previous:** ![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.5/total.svg)
+
+**Current:**  ![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)
+
 
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
 
