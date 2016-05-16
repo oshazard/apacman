@@ -13,7 +13,11 @@ ArchLinux User Repository (AUR) helper ![AUR](https://img.shields.io/aur/votes/a
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
 
 Changelog:
-* **NEW** merged pull requests for AUR5 support
+* **NEW** improve -U to display packages removed from AUR as "unresolvable"
+* **NEW** bug fix for --devel
+* **NEW** merged fix that improves curl debugging
+* **NEW** merged fix that removes split package support
+* merged pull requests for AUR5 support
 * improved virtual package support
 * improved -U handling
 * -W parameter to view package comments
