@@ -523,7 +523,7 @@ abslink() {
 pkginfo() {
   if ! [[ -f "$tmpdir/$1.PKGBUILD" ]]; then
     pkgpath=$(pkglink $1)
-    basepath=$(echo ${pkgpath##*/} | awk -F . '{print $1}')
+    basepath=$(echo ${pkgpath##*/} | sed 's/\.tar\.gz$//')
     if [[ $legacy == 1 ]]; then
       curl -Lfs "${pkgpath%/*}/PKGBUILD" > "$tmpdir/$1.PKGBUILD"
       cstatus=$?; curlyq "$cstatus" "$1"
