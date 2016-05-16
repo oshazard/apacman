@@ -1,7 +1,7 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.4"
+version="2.6"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
