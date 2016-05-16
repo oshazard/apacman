@@ -726,14 +726,12 @@ aurinstall() {
   fi
 
   # Check for split PKGBUILD
-  unset pkgtarget
   pkgbase=($(pkgbuildgrep pkgbase));
   pkgname=($(pkgbuildgrep pkgname));
   if [[ "${pkgbase[@]}" ]]; then
     echo -e "  ${COLOR5}->${ENDCOLOR}${COLOR1} Split package base: ${pkgbase[@]}${ENDCOLOR}";
     if [[ "${#pkgname[@]}" -gt 1 ]]; then
       echo -e "  ${COLOR5}->${ENDCOLOR}${COLOR1} PKGBUILD contains: ${pkgname[@]}${ENDCOLOR}";
-      pkgtarget="--pkg $1"
       for split in ${pkgname[@]}; do
         ln -s "${builddir}/$1" "${builddir}/$split" 2>/dev/null;
       done
@@ -773,11 +771,11 @@ aurinstall() {
         askpgpkeys "${validpgpkeys[*]}"
         su aurbuild -c "addpgpkeys ${validpgpkeys[*]}"
       fi
-      su aurbuild -c "makepkg $MAKEPKGOPTS $pkgtarget -f"; buildcheck=$?
+      su aurbuild -c "makepkg $MAKEPKGOPTS -f"; buildcheck=$?
       [[ $keyfound ]] || su aurbuild -c "removepgpkeys ${validpgpkeys[*]}"
       [[ $purgekeys ]] && [[ $keyfound ]] && su aurbuild -c "removepgpkeys ${validpgpkeys[*]}"
     else
-      su aurbuild -c "makepkg $MAKEPKGOPTS $pkgtarget -f"; buildcheck=$?
+      su aurbuild -c "makepkg $MAKEPKGOPTS -f"; buildcheck=$?
     fi
   else
     if [[ $validpgpkeys ]]; then
@@ -787,11 +785,11 @@ aurinstall() {
         askpgpkeys "${validpgpkeys[@]}"
         addpgpkeys "${validpgpkeys[@]}"
       fi
-      makepkg $MAKEPKGOPTS $pkgtarget -f; buildcheck=$?
+      makepkg $MAKEPKGOPTS -f; buildcheck=$?
       [[ $keyfound ]] || removepgpkeys "${validpgpkeys[@]}"
       [[ $purgekeys ]] && [[ $keyfound ]] && removepgpkeys "${validpgpkeys[@]}"
     else
-      makepkg $MAKEPKGOPTS $pkgtarget -f; buildcheck=$?
+      makepkg $MAKEPKGOPTS -f; buildcheck=$?
     fi
   fi
 
