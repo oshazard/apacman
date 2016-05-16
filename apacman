@@ -203,10 +203,10 @@ runasroot() {
   fi
 }
 
-# debugging for curl ($1 is curl exit code)
+# debugging for curl ($1 is curl exit code, $2 package name)
 curlyq() {
   if [ $1 -ne 0 -a $1 -ne 7 ]; then
-    echo -e "${COLOR6}notice:${ENDCOLOR} curl exited with code $1"
+    echo -e "${COLOR6}notice:${ENDCOLOR} curl exited with code $1 on $2"
     if deptest man; then
       curlman=$(man curl | sed '1,/^EXIT CODES/d' | grep " $1 ")
       curlman=$(echo "$curlman" | awk -F "    " '{print $3}' | sed 's/^[ \t]*//')
@@ -526,10 +526,10 @@ pkginfo() {
     basepath=$(echo ${pkgpath##*/} | awk -F . '{print $1}')
     if [[ $legacy == 1 ]]; then
       curl -Lfs "${pkgpath%/*}/PKGBUILD" > "$tmpdir/$1.PKGBUILD"
-      cstatus=$?; curlyq "$cstatus"
+      cstatus=$?; curlyq "$cstatus" "$1"
     else
       curl -Lfs "${pkgpath%/*/*}/plain/PKGBUILD?h=${basepath}" > "$tmpdir/$1.PKGBUILD"
-      cstatus=$?; curlyq "$cstatus"
+      cstatus=$?; curlyq "$cstatus" "$1"
     fi
 
     if [[ $2 ]]; then
@@ -711,7 +711,7 @@ aurinstall() {
     mkdir -p "$builddir"
     cd "$builddir"
     curl -Lfs "$(pkglink $1)" > "$1.tar.gz"
-    cstatus=$?; curlyq "$cstatus"
+    cstatus=$?; curlyq "$cstatus" "$1"
     mkdir "$1"
     tar xf "$1.tar.gz" -C "$1" --strip-components=1
     cd "$1"
@@ -1277,7 +1277,7 @@ if [[ $option = download ]]; then
   [[ $pkglist ]] && echo -e "${COLOR6}notice:$ENDCOLOR sourcing from ${COLOR3}[AUR]$ENDCOLOR"
   for package in "${pkglist[@]}"; do
     curl -Lfs "$(pkglink $package)" > "$package.tar.gz"
-    cstatus=$?; curlyq "$cstatus"
+    cstatus=$?; curlyq "$cstatus" "$package"
     [ -d "$package" ] && rm -r "$package"
     if [ -f "$package.tar.gz" ]; then
       mkdir "$package"
@@ -1472,7 +1472,7 @@ if [[ $option = web ]]; then
       echo -e "${COLOR7}error:${ENDCOLOR} comments unavailable for non-AUR package '$package'"
     elif ! [[ $noaur ]]; then # Check to see if it is in the aur
       curl -Lfs "$PKGURL/packages/$package/?comments=all" > "$tmpdir/$package.html"
-      cstatus=$?; curlyq "$cstatus"
+      cstatus=$?; curlyq "$cstatus" "$package"
       [[ -s "$tmpdir/$package.html" ]] || err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
 
       separator="======================================"
