@@ -1,7 +1,7 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.3"
+version="2.4"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
@@ -1174,6 +1174,7 @@ if [[ $option = update ]]; then
     IFS=$'\n' read -rd '' -a packages < <($pacmanbin -Qm)
     newpackages=()
     checkignores=()
+    extinctpkgs=()
     total="${#packages[@]}"
     grep -q '^ *ILoveCandy' "$pacmanconf" && bartype='candy' || bartype='normal'
   fi
@@ -1184,6 +1185,9 @@ if [[ $option = update ]]; then
       pkg="${packages[i]%% *}"
       if isignored "$pkg"; then
         checkignores+=("${packages[i]}")
+        continue
+      elif ! existsinaur "$pkg"; then
+        extinctpkgs+=("${packages[i]}")
         continue
       fi
       pkginfo "$pkg" &
@@ -1220,9 +1224,11 @@ if [[ $option = update ]]; then
       ver="${packages[i]##* }"
       if isignored "$pkg"; then
         checkignores+=("${packages[i]}")
+      elif ! existsinaur "$pkg"; then
+        extinctpkgs+=("${packages[i]}")
       elif aurversionisnewer "$pkg" "$ver"; then
         newpackages+=("$pkg")
-    fi
+      fi
     done
   fi
   echo
@@ -1235,6 +1241,16 @@ if [[ $option = update ]]; then
       echo -e "${COLOR6}warning:${ENDCOLOR} ${package%% *}: ignoring package upgrade (${package##* } => $aurversion)"
     fi
   done
+
+  # Alert packages no longer in AUR
+  if [[ $extinctpkgs ]]; then
+    for package in "${extinctpkgs[@]}"; do
+      listextinct+=("${package%% *}")
+    done
+    echo ""
+    echo -e "${COLOR6}Unresolvable   (${#listextinct[@]}):${ENDCOLOR} ${listextinct[@]}"
+    echo ""
+  fi
 
   # Now for the installation part
   if [[ $newpackages ]]; then
