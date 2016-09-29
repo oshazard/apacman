@@ -1,7 +1,7 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.6"
+version="2.7"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
@@ -173,6 +173,10 @@ varstatus() {
   val=$(eval echo \$$1)
   if [ "$val" == 1 ]; then
     echo -e "${COLOR1}$1${ENDCOLOR}" | awk '{printf "%-25s %-40s\n",$1,": yes"}';
+  elif [ "$val" == 0 ]; then
+    echo -e "${COLOR1}$1${ENDCOLOR}" | awk '{printf "%-25s %-40s\n",$1,": no"}';
+  elif [ "$val" == 2 ] || [ "$val" == 3 ]; then
+    echo -e "${COLOR1}$1${ENDCOLOR}" | awk '{printf "%-25s %-40s\n",$1,": alt mode"}';
   elif [[ -r $val ]]; then
     echo -e "${COLOR1}$1${ENDCOLOR} $val" | awk '{printf "%-25s %-40s\n",$1,": "$2}';
   fi
@@ -585,9 +589,9 @@ buildstatus() {
     echo -e "${COLOR7}==> ERROR:${ENDCOLOR} ${COLOR1}the build failed${ENDCOLOR}"
   fi
 
-  echo -ne "${COLOR5}  ->${ENDCOLOR} ${COLOR1}Status${ENDCOLOR}"
-  [[ $success ]] && echo -ne "\t${COLOR4}built (${#success[@]}):${ENDCOLOR} ${success[@]}"
-  [[ $failure ]] && echo -ne "\t${COLOR7}failed (${#failure[@]}):${ENDCOLOR} ${failure[@]}"
+  echo -e "${COLOR5}  ->${ENDCOLOR} ${COLOR1}Status${ENDCOLOR}"
+  [[ $success ]] && echo -e "\t${COLOR4}built  (${#success[@]}):${ENDCOLOR} ${success[@]}"
+  [[ $failure ]] && echo -e "\t${COLOR7}failed (${#failure[@]}):${ENDCOLOR} ${failure[@]}"
   echo ""
 
   [[ $nofail = 1 && $1 != 0 ]] && exit 1
@@ -634,7 +638,7 @@ checkcache() {
 
   pkgnum=$((pkgnum+1))
   if [ -f "$pkgfile" ]; then
-    progress "Installing ${pkgnum}/${totalcount} $1"
+    #progress "Installing ${pkgnum}/${totalcount} $1"
     cacheinstall "$1" "$2" "$pkgfile"
   else
     progress "Building ${pkgnum}/${totalcount} $1"
@@ -713,7 +717,7 @@ aurinstall() {
     curl -Lfs "$(pkglink $1)" > "$1.tar.gz"
     cstatus=$?; curlyq "$cstatus" "$1"
     mkdir "$1"
-    tar xf "$1.tar.gz" -C "$1" --strip-components=1
+    tar -xf "$1.tar.gz" -C "$1" --strip-components=1
     cd "$1"
     if [[ $preview &&  -s "$tmpdir/$1.PKGBUILD" ]]; then
       cp "$tmpdir/$1.PKGBUILD" PKGBUILD
@@ -941,6 +945,8 @@ installhandling() {
     echo
     echo -e "${COLOR6}Aur Targets    ($((${#aurtargets[@]}))):${ENDCOLOR} ${aurtargets[@]}"
   fi
+
+  # Prompt for pacman dependencies
   if [[ $pacmandepends ]]; then
     IFS=$'\n' read -rd '' -a pacmandepends < \
       <(printf "%s\n" "${pacmandepends[@]}" | sort -u)
@@ -1069,9 +1075,9 @@ while [[ $1 ]]; do
     '-Ss') option=search ;;
     '-Ssq'|'-Sqs') option=search ; quiet='1' ;;
     '-Si') option=info ;;
-    -S*u*) option=update ; pacmanarg="$1" ;;
+    -S*u*) option=update ; escaperope='1' ; pacmanarg="$1" ;;
     '-G') option=download ;;
-    -L*) option=list ; pacmanarg="${1//-L}" ;;
+    -L*) option=list ; escaperope='1' ; pacmanarg="${1//-L}" ;;
     -W*) option=web ; pacmanarg="${1//-W}" ;;
     '--asdeps') asdeps='1' PACOPTS+=("--asdeps") ; export asdeps; unset asexplicit ;;
     '--asexplicit') asexplicit='1' PACOPTS+=("--asexplicit"); export asexplicit; unset asdeps ;;
@@ -1138,7 +1144,7 @@ fi
 [[ $verbose || $debug ]] && infoconf
 [[ $config && -z $apacmanconf ]] && err "${COLOR7}error:${ENDCOLOR} no config file specified (use -h for help)"
 [[ $option ]] || option="searchinstall"
-[[ $option != "list" && $option != "update" && -z $packageargs ]] && err "${COLOR7}error:${ENDCOLOR} must specify a package."
+[[ $escaperope != 1 && -z $packageargs ]] && err "${COLOR7}error:${ENDCOLOR} must specify a package."
 [[ $auronly && $noaur ]] && err "Parameters --auronly and --noaur conflict."
 
 # List (-L) handling
@@ -1297,7 +1303,7 @@ if [[ $option = download ]]; then
     [ -d "$package" ] && rm -r "$package"
     if [ -f "$package.tar.gz" ]; then
       mkdir "$package"
-      tar xvf "$package.tar.gz" -C "$package" --strip-components=1
+      tar -xvf "$package.tar.gz" -C "$package" --strip-components=1
     else
       err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$package'"
     fi
