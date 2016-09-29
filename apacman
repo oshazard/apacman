@@ -5,6 +5,7 @@ version="2.7"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Fix CLI switch precedence over config file
 # * Improved support for virtual packages
 # * Improved -U handling
 # * Built-in ABS support (improved)
@@ -1066,6 +1067,9 @@ pacwrap() {
   exit 0;
 }
 
+# Override defaults
+sourceapacmanconf
+
 # Argument parsing
 [[ $1 ]] || usage
 packageargs=()
@@ -1123,9 +1127,6 @@ while [[ $1 ]]; do
   esac
   shift
 done
-
-# Override defaults
-sourceapacmanconf
 
 # Set tmpfile stuff, clean tmpdir
 rm -rf "$tmpdir" &>/dev/null
