@@ -1,10 +1,11 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.7"
+version="2.8"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Enabled --progress by default
 # * Fix CLI switch precedence over config file
 # * Improved support for virtual packages
 # * Improved -U handling
@@ -25,6 +26,8 @@ version="2.7"
 # * --legacy      backwards compatability for AUR3 (deprecated)
 # * --progress    transaction status in terminal titlebar
 # * --nosource    for security do not source PKGBUILDs (WIP)
+# * --noprogress  no transaction status in titlebar
+# * --notify      transaction status in notification
 # * --buildonly   create but do not install packages
 # * --nofail      do not continue if a package fails to build
 # * --purgebuild  remove unneeded build dependencies
@@ -155,7 +158,9 @@ usage() {
   echo '    --noconfirm  - do not prompt for any confirmation'
   echo '    --noedit     - do not prompt to edit files'
   echo '    --nofail     - do not continue if a package fails to build'
+  echo '    --noprogress - no transaction status in titlebar'
   echo '    --nosource   - do not source PKGBUILDs (WIP)'
+  echo '    --notify     - transaction status in notification'
   echo '    --preview    - edit pkgbuild before sourcing'
   echo '    --progress   - transaction status in terminal titlebar'
   echo '    --purgebuild - remove unneeded build dependencies'
@@ -595,6 +600,7 @@ buildstatus() {
   echo -e "${COLOR5}  ->${ENDCOLOR} ${COLOR1}Status${ENDCOLOR}"
   [[ $success ]] && echo -e "\t${COLOR4}built  (${#success[@]}):${ENDCOLOR} ${success[@]}"
   [[ $failure ]] && echo -e "\t${COLOR7}failed (${#failure[@]}):${ENDCOLOR} ${failure[@]}"
+  [[ $remains ]] && echo -e "\t${COLOR6}remain (${#remains[@]}):${ENDCOLOR} ${remains[@]}"
   echo ""
 
   [[ $nofail = 1 && $1 != 0 ]] && exit 1
@@ -658,6 +664,7 @@ cacheinstall() {
   fi
 
   echo -e "${COLOR6}notice:$ENDCOLOR installing $pkgrelease from cache"
+  remains=(${remains[@]/$1/})
   buildinstall $1 $2 $3
 }
 
@@ -801,6 +808,7 @@ aurinstall() {
   fi
 
   # Build check
+  remains=(${remains[@]/$1/});
   if [[ $buildcheck -ne 0 ]]; then
     failure+=("$1")
     buildstatus 1
@@ -813,8 +821,8 @@ aurinstall() {
   pkgtar=$(ls $1-*$PKGEXT 2>/dev/null | tail -n 1)
   if [[ $pkgtar ]]; then
     [ -d $savedir ] || runasroot mkdir -p $savedir
-    runasroot cp ${pkgtar} $savedir/ &&
-    echo -e "${COLOR5}  -> ${COLOR1}Saved package:${ENDCOLOR} ${pkgtar}";
+    echo -e "${COLOR5}  -> ${COLOR1}Saving package:${ENDCOLOR} ${pkgtar}"
+    runasroot cp ${pkgtar} $savedir/
     buildinstall $1 $2 ${savedir}/$pkgtar
   fi
 }
@@ -959,6 +967,7 @@ installhandling() {
   # Sanity check
   pkgnum="${#pacmandepends[@]}"
   totalcount="$((${#aurdepends[@]}+${#aurtargets[@]}+${#pacmandepends[@]}))"
+  remains=($(printf "%s\n" "${aurdepends[@]}" "${aurtargets[@]}" | sort -u))
   if [ "$totalcount" = "0" ]; then
     [[ $localinstall ]] ||
     echo -e "${COLOR5}==>$ENDCOLOR nothing to do"
@@ -1104,7 +1113,9 @@ while [[ $1 ]]; do
     '--noconfirm') noconfirm='1' PACOPTS+=("--noconfirm") ; export noconfirm ;;
     '--noedit') noedit='1' ;;
     '--nofail') nofail='1' ;;
+    '--noprogress') unset progress ;;
     '--nosource') nosource='1' ;;
+    '--notify') progress='2' ;;
     '--preview') preview='1' ;;
     '--progress') progress='1' ;;
     '--purgebuild') purgebuild='1' ;;
