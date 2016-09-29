@@ -19,6 +19,7 @@ version="2.7"
 # * Uses AUR package cache directory if applicable
 # * --asdeps      install AUR packages non-explicitly
 # * --asexplicit  install AUR packages explicitly
+# * --edit        always ask to edit PKGBUILD
 # * --keepkeys    do not remove imported PGP keys
 # * --purgekeys   remove imported PGP keys
 # * --legacy      backwards compatability for AUR3 (deprecated)
@@ -144,6 +145,7 @@ usage() {
   echo '    --config     - specify alternate config file (default: /etc/apacman.conf)'
   echo '    --cachevcs   - installs cached VCS packages newer than AUR PKGBUILDs'
   echo '    --devel      - update VCS (git, svn, hg) packages during -Su'
+  echo '    --edit       - always ask to edit PKGBUILD'
   echo '    --ignore     - takes a comma-separated list of packages to ignore'
   echo '    --ignorearch - ignore a missing or incomplete architecture field'
   echo '    --keepkeys   - do not remove imported PGP keys'
@@ -1090,6 +1092,7 @@ while [[ $1 ]]; do
     '--cachevcs') cachevcs='1' ;;
     '--config') config='1' ; apacmanconf="$2" ; shift ;;
     '--devel') devel='1' ;;
+    '--edit') unset noedit ;;
     '--force') force='1' PACOPTS+=("--force");;
     '--ignore') ignorearg="$2" ; PACOPTS+=("--ignore" "$2") ; shift ;;
     '--ignorearch') MAKEPKGOPTS+=("--ignorearch");;
