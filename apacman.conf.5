@@ -108,6 +108,11 @@ Do no actions for AUR (hint: useful with --warn)\&.
 Do not prompt for any confirmation\&.
 .RE
 .PP
+\fBnodatabase =\fR 1
+.RS 4
+Do not store local AUR database\&.
+.RE
+.PP
 \fBnoedit =\fR 1
 .RS 4
 Do not prompt to edit files with EDITOR\&.
@@ -200,6 +205,34 @@ Overrides the default location of the global pacman configuration file\&.
 Overrides the default location of the package cache directory\&.
 .sp .5v
 \fBDefault\fR: /var/cache/apacman/pkg
+.RE
+.PP
+\fBdatabase =\fR path/to/database/dir
+.RS 4
+Overrides the default location of the apacman DB directory\&.
+.sp .5v
+\fBDefault\fR: /var/lib/apacman
+.RE
+.PP
+\fBpacmandb =\fR path/to/aur.db
+.RS 4
+Overrides the default location of the locally installed AUR package DB\&.
+.sp .5v
+\fBDefault\fR: /var/lib/pacman/sync/aur.db
+.RE
+.PP
+\fBpkgfiledb =\fR path/to/aur.files
+.RS 4
+Overrides the default location of the pkgfile-format local AUR package DB\&.
+.sp .5v
+\fBDefault\fR: /var/cache/pkgfile/aur.files
+.RE
+.PP
+\fBlocalrepo =\fR name
+.RS 4
+Overrides the default name of the AUR repository\&.
+.sp .5v
+\fBDefault\fR: aur
 .RE
 .PP
 \fBeditor =\fR nano \-w

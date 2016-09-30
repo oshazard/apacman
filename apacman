@@ -1,10 +1,12 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.8"
+version="2.9"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * -P           patched AUR passthrough for pkgfile
+# * Save installed AUR package metadata to database
 # * Enabled --progress by default
 # * Fix CLI switch precedence over config file
 # * Improved support for virtual packages
@@ -21,10 +23,12 @@ version="2.8"
 # * --asdeps      install AUR packages non-explicitly
 # * --asexplicit  install AUR packages explicitly
 # * --edit        always ask to edit PKGBUILD
+# * --gendb       generate AUR database files
 # * --keepkeys    do not remove imported PGP keys
 # * --purgekeys   remove imported PGP keys
 # * --legacy      backwards compatability for AUR3 (deprecated)
 # * --progress    transaction status in terminal titlebar
+# * --nodatabase  do not store AUR database
 # * --nosource    for security do not source PKGBUILDs (WIP)
 # * --noprogress  no transaction status in titlebar
 # * --notify      transaction status in notification
@@ -68,6 +72,10 @@ apacmanconf='/etc/apacman.conf'
 gpgconf='/etc/pacman.d/gnupg/gpg.conf'
 downdir='/var/cache/pacman/pkg'
 savedir='/var/cache/apacman/pkg'
+database='/var/lib/apacman'
+pacmandb='/var/lib/pacman/sync/aur.db'
+pkgfiledb='/var/cache/pkgfile/aur.files'
+localrepo='aur'
 builddir="${TMPDIR:-/tmp}/pkgbuild-$UID"
 tmpdir="${TMPDIR:-/tmp}/apacmantmp-$UID"
 
@@ -139,6 +147,7 @@ usage() {
   echo '    -Si          - outputs info for package'
   echo '    -G           - download and extract aur tarball only'
   echo '    -L           - list installed packages by size'
+  echo '    -P           - passthrough for pkgfile command'
   echo '    -W           - view web comments for package'
   echo
   echo '    --asdeps     - install AUR packages marked as dependencies'
@@ -149,6 +158,7 @@ usage() {
   echo '    --cachevcs   - installs cached VCS packages newer than AUR PKGBUILDs'
   echo '    --devel      - update VCS (git, svn, hg) packages during -Su'
   echo '    --edit       - always ask to edit PKGBUILD'
+  echo '    --gendb      - generate AUR database files'
   echo '    --ignore     - takes a comma-separated list of packages to ignore'
   echo '    --ignorearch - ignore a missing or incomplete architecture field'
   echo '    --keepkeys   - do not remove imported PGP keys'
@@ -156,6 +166,7 @@ usage() {
   echo '    --needed     - do not install up-to-date packages'
   echo '    --noaur      - do not actions for AUR'
   echo '    --noconfirm  - do not prompt for any confirmation'
+  echo '    --nodatabase - do not store AUR database'
   echo '    --noedit     - do not prompt to edit files'
   echo '    --nofail     - do not continue if a package fails to build'
   echo '    --noprogress - no transaction status in titlebar'
@@ -191,13 +202,15 @@ varstatus() {
 }
 
 infoconf() {
-  vars="apacmanconf builddir downdir editor makepkgconf pacmanconf savedir tmpdir usermakepkgconf"
+  vars="apacmanconf builddir database downdir editor localrepo makepkgconf"
+  vars="$vars pacmanconf pacmandb pkgfiledb savedir tmpdir usermakepkgconf"
   for i in $vars; do
     varstatus $i
   done
 
-  vars="asdeps asexplicit auronly buildonly cachevcs ignorearch keepkeys legacy needed noaur noconfirm"
-  vars="$vars noedit nofail preview progress purgebuild purgekeys quiet skipcache skipinteg skiptest warn"
+  vars="asdeps asexplicit auronly buildonly cachevcs ignorearch keepkeys legacy"
+  vars="$vars needed noaur noconfirm nodatabase noedit nofail preview progress"
+  vars="$vars purgebuild purgekeys quiet skipcache skipinteg skiptest warn"
   for j in $vars; do
     varstatus $j
   done
@@ -571,6 +584,59 @@ isoutofdate() {
   [[ "$(jshon -Q -e results -a -e OutOfDate -u < "$tmpdir/$1.info")" = "1" ]]
 }
 
+# Generate local AUR database
+aurgendb() {
+  echo -e "${COLOR5}::${COLOR1} Generating AUR database...${ENDCOLOR}"
+  progress "Generating AUR DB"
+  runasroot mkdir -p ${database}/{local,raw}
+  savedpkgs=$(ls ${savedir}/*-*-{any,${makearch}}.pkg.{tar,tar.xz} 2>/dev/null)
+  runasroot repo-add ${database}/raw/aur.db.tar.gz $savedpkgs
+  runasroot tar -xzf ${database}/raw/aur.files.tar.gz -C ${database}/local/
+  runasroot ln -s ${database}/raw/aur.db.tar.gz $pacmandb 2>/dev/null
+}
+
+# Update AUR pkgfile database
+aurpkgfile() {
+  pkgdir=$(mktemp -d)
+
+  if [[ -d ${database}/local ]]; then
+    cd ${database}/local
+    aurlist=$(ls)
+    for aurpkg in $aurlist; do
+      grep -v "^%" $aurpkg/files | sed 's/^/\//' > $pkgdir/$aurpkg
+    done
+  fi
+
+  cd "$pkgdir"
+  runasroot tar -czf ${database}/raw/pkgfile.tar.gz *
+  cd - >/dev/null
+  rm -r "$pkgdir"
+  runasroot ln -s ${database}/raw/pkgfile.tar.gz "$pkgfiledb" 2>/dev/null
+  echo -e "${COLOR5}::${COLOR1} Updated AUR database${ENDCOLOR}"
+}
+
+# Update local AUR database ($1 is package, $2 is filename)
+aurlocaldb() {
+  if [[ $nodatabase ]]; then
+    return
+  elif [[ ! -d $database ]] || [[ ! -f $pacmandb ]]; then
+    runasroot mkdir -p ${database}/{local,raw}
+    echo -e "${COLOR5}::${COLOR1} Checking AUR database${ENDCOLOR}"
+    savecount=$(ls $savedir 2>/dev/null | wc -l)
+    if [[ $savecount -gt 0 ]]; then
+      echo -e "${COLOR7}warning:${ENDCOLOR} need to run ${COLOR1}apacman --gendb${ENDCOLOR} (found $savecount AUR files!)"
+    else
+      runasroot repo-add -q ${database}/raw/aur.db.tar.gz 2>/dev/null
+      runasroot ln -s ${database}/raw/aur.db.tar.gz $pacmandb 2>/dev/null
+    fi
+  fi
+
+  runasroot repo-add -q ${database}/raw/aur.db.tar.gz "$2" 2>/dev/null
+  pkgnamever=$(echo "$2" | awk -F "$savedir/" '{print $2}' | sed "s/-any.pkg.tar.*//g;s/-${makearch}.pkg.tar.*//g")
+  runasroot tar -C ${database}/local/ -x "$pkgnamever/" -zf ${database}/raw/aur.files.tar.gz &&
+  aurpkgfile
+}
+
 # List bundle package files
 listbundle() {
   if [[ $bundle ]]; then
@@ -610,6 +676,7 @@ buildstatus() {
 buildinstall() {
   if [[ $2 = dependency ]]; then
     runasroot $PACMAN ${PACOPTS[@]} --asdeps -U "$3"
+    aurlocaldb "$1" "$3"
     [[ $buildonly = 1 ]] && bundle+=("$3")
     [[ $buildonly = 1 ]] && purgedeps+=("$1")
   elif [[ $2 = explicit ]]; then
@@ -617,13 +684,14 @@ buildinstall() {
     [[ $buildonly = 1 ]] && bundle+=("$3")
     [[ $buildonly != 1 ]] && progress "Installing ${pkgnum}/${totalcount} $1"
     [[ $buildonly != 1 ]] && runasroot $PACMAN ${PACOPTS[@]} -U "$3"
+    [[ $buildonly != 1 ]] && aurlocaldb "$1" "$3"
   fi
 }
 
 # Checks if aur cache is newer than aur ($1 is package, $2 is aur version)
 checkvcs() {
   cachefile=$(ls -t ${savedir}/${1}-*-{any,${makearch}}.pkg.{tar,tar.xz} 2>/dev/null | awk NR==1 | awk -F "${savedir}/${1}-" '{print $2}');
-  cachever=$(echo "$cachefile" | sed "s/-any.pkg.tar.xz//g;s/-any.pkg.tar//g;s/-${makearch}.pkg.tar.xz//g;s/-${makearch}.pkg.tar//g");
+  cachever=$(echo "$cachefile" | sed "s/-any.pkg.tar.*//g;s/-${makearch}.pkg.tar.*//g");
   if [[ "$(LC_ALL=C vercmp "$cachever" "$2")" -gt 0 ]]; then
     echo -e "${COLOR7}warning:${ENDCOLOR} $1 -- ${COLOR7}verify cache newer than AUR${ENDCOLOR} ($pkgver-$pkgrel)" 
     pkgfile="${savedir}/${1}-${cachefile}";
@@ -825,6 +893,25 @@ aurinstall() {
     runasroot cp ${pkgtar} $savedir/
     buildinstall $1 $2 ${savedir}/$pkgtar
   fi
+}
+
+# Passthrough for pkgfile
+pkgfilehandling() {
+  if ! deptest pkgfile; then
+    err "${COLOR7}error:${ENDCOLOR} $1 requires \`pkgfile'"
+    return
+  fi
+
+  if [[ ! -f $pacmandb ]]; then
+    echo -e "${COLOR7}warning:${ENDCOLOR} need to run ${COLOR1}apacman --gendb${ENDCOLOR}"
+  fi
+
+  if [[ $1 = -P* ]] && [[ $1 != -P ]]; then
+    Parg=$(echo $1 | sed 's/P//g')
+  fi
+
+  shift
+  pkgfile -C <(cat $pacmanconf | sed "$ a [$localrepo]") $Parg "$@"
 }
 
 # Install local packages (-U)
@@ -1072,6 +1159,10 @@ pacwrap() {
     $pacmanbin "$@";
   elif [[ $1 = -U* ]]; then
     localhandling "$@"
+  elif [[ $1 = -P* ]]; then
+    pkgfilehandling "$@";
+  elif [[ $1 = --pkgfile ]]; then
+    pkgfilehandling "$@";
   else
     runasroot $pacmanbin "$@";
   fi;
@@ -1103,6 +1194,7 @@ while [[ $1 ]]; do
     '--devel') devel='1' ;;
     '--edit') unset noedit ;;
     '--force') force='1' PACOPTS+=("--force");;
+    '--gendb') option=gendb ; escaperope='1' ;;
     '--ignore') ignorearg="$2" ; PACOPTS+=("--ignore" "$2") ; shift ;;
     '--ignorearch') MAKEPKGOPTS+=("--ignorearch");;
     '--keepkeys') keepkeys='1' ; export keepkeys ;;
@@ -1111,11 +1203,13 @@ while [[ $1 ]]; do
     '--needed') needed='1' PACOPTS+=("--needed");;
     '--noaur') noaur='1' ; unset auronly ;;
     '--noconfirm') noconfirm='1' PACOPTS+=("--noconfirm") ; export noconfirm ;;
+    '--nodatabase') nodatabase='1' ;;
     '--noedit') noedit='1' ;;
     '--nofail') nofail='1' ;;
     '--noprogress') unset progress ;;
     '--nosource') nosource='1' ;;
     '--notify') progress='2' ;;
+    '--pkgfile') pacwrap "$@" ;;
     '--preview') preview='1' ;;
     '--progress') progress='1' ;;
     '--purgebuild') purgebuild='1' ;;
@@ -1131,6 +1225,7 @@ while [[ $1 ]]; do
     '-V'|'--version') version ;;
     '--') shift ; packageargs+=("$@") ; break ;;
     -D*) pacwrap "$@" ;;
+    -P*) pacwrap "$@" ;;
     -Q*) pacwrap "$@" ;;
     -R*) pacwrap "$@" ;;
     -S*) pacwrap "$@" ;;
@@ -1161,6 +1256,12 @@ fi
 [[ $option ]] || option="searchinstall"
 [[ $escaperope != 1 && -z $packageargs ]] && err "${COLOR7}error:${ENDCOLOR} must specify a package."
 [[ $auronly && $noaur ]] && err "Parameters --auronly and --noaur conflict."
+
+# Generate DB (--gendb) handling
+if [[ $option = gendb ]]; then
+  aurgendb
+  exit
+fi
 
 # List (-L) handling
 if [[ $option = list ]]; then

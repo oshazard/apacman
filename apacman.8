@@ -56,7 +56,12 @@ Download and extract ABS and AUR package tarballs, but don\(cqt install anything
 .PP
 \fB\-L\fR
 .RS 4
-List installed packages by size (replacement for pacsysclean\&.)
+List installed packages by size (replacement for \fIpacsysclean\fR command)\&.
+.RE
+.PP
+\fB\-P, \-\-pkgfile\fR
+.RS 4
+Patched AUR passthrough for \fIpkgfile\fR command\&.
 .RE
 .PP
 \fB\-W\fR
@@ -64,12 +69,17 @@ List installed packages by size (replacement for pacsysclean\&.)
 View AUR comments\&.
 .RE
 .PP
-\fB\-h\fR
+\fB\-V\fR
 .RS 4
 Show apacman version\&.
 .RE
 .PP
-\fB\-h\fR
+\fB\-v, \-\-verbose\fR
+.RS 4
+Show enabled options\&.
+.RE
+.PP
+\fB\-h, \-\-help\fR
 .RS 4
 Show apacman usage\&.
 .RE
@@ -107,6 +117,11 @@ Update development packages\&. (cvs, git\&...)
 Always ask to edit PKGBUILD (overrides 'noedit' option)\&.
 .RE
 .PP
+\fB\-\-gendb\fR
+.RS 4
+Generate AUR local package database\&.
+.RE
+.PP
 \fB\-\-ignore\fR <\'package\'>
 .RS 4
 Ignore packages\&. Separate package names with a comma\&.
@@ -142,6 +157,11 @@ Do not perform commands for the AUR\&.
 Perform commands without confirmation from the user\&.
 .RE
 .PP
+\fB\-\-nodatabase\fR
+.RS 4
+Do not store AUR database\&.
+.RE
+.PP
 \fB\-\-noedit\fR
 .RS 4
 Perform commands without asking if the user wants to edit any installation files\&.
@@ -164,7 +184,7 @@ Do not source PKGBUILDs, for security reasons (WIP)\&.
 .PP
 \fB\-\-notify\fR
 .RS 4
-Notification via notify\-send with transaction status\&.
+Notification via \fInotify\-send\fR with transaction status\&.
 .RE
 .PP
 \fB\-\-preview\fR
@@ -210,11 +230,6 @@ Skip the integrity check by ignoring AUR package MD5 sums\&.
 \fB\-\-skiptest\fR
 .RS 4
 Avoid install of check unit test packages\&.
-.RE
-.PP
-\fB\-\-verbose\fR
-.RS 4
-Show enabled options\&.
 .RE
 .PP
 \fB\-\-warn\fR
