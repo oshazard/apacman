@@ -586,13 +586,15 @@ isoutofdate() {
 
 # Generate local AUR database
 aurgendb() {
-  echo -e "${COLOR5}::${COLOR1} Generating AUR database...${ENDCOLOR}"
-  progress "Generating AUR DB"
+  savecount=$(ls $savedir 2>/dev/null | wc -l)
+  echo -e "${COLOR5}::${COLOR1} Generating AUR database... ($savecount)${ENDCOLOR}"
+  progress "Generating AUR DB ($savecount)"
   runasroot mkdir -p ${database}/{local,raw}
   savedpkgs=$(ls ${savedir}/*-*-{any,${makearch}}.pkg.{tar,tar.xz} 2>/dev/null)
   runasroot repo-add ${database}/raw/aur.db.tar.gz $savedpkgs
   runasroot tar -xzf ${database}/raw/aur.files.tar.gz -C ${database}/local/
   runasroot ln -s ${database}/raw/aur.db.tar.gz $pacmandb 2>/dev/null
+  aurpkgfile
 }
 
 # Update AUR pkgfile database
@@ -1613,13 +1615,18 @@ if [[ $option = web ]]; then
       cstatus=$?; curlyq "$cstatus" "$package"
       [[ -s "$tmpdir/$package.html" ]] || err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
 
-      separator="======================================"
+      div="%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+      separator="${COLOR3}${div}${div}${ENDCOLOR}"
       header="${COLOR4}*******************************${ENDCOLOR}"
-      comments="$(sed -e 's/<[^>]\+>/ /g' -e 's/^[ \t]*//' -e '/^$/d' "$tmpdir/$package.html")"
-      comments="$(sed "s/^Comment by/$separator\n&/" <<< "$comments")"
+      comments="$(sed '/<script>/Q' "$tmpdir/$package.html")"
+      comments="$(sed "s/<h4 id=\x22comment-/${div}%%&/g" <<< "$comments")"
+      comments="$(sed "s/<div class=\x22article-content\x22>/$(printf $separator)/" <<< "$comments")"
+      comments="$(sed -e 's/<[^>]\+>/ /g' -e 's/^[ \t]*//' -e '/^$/d' <<< "$comments")"
+      comments="$(sed 's/\&amp;/\&/g; s/\&lt;/</g; s/\&gt;/>/g; s/\&quot;/\x22/g; s/\&#39;/\x27/g' <<< "$comments")"
+      comments="$(sed "s/\B@[^/ \t]*/$(printf ${COLOR2})&$(printf ${ENDCOLOR})/g" <<< "$comments")"
       comments="$(sed '1,/Latest Comments/d' <<< "$comments" | tac | sed '1,3d' | tac)"
-      echo -en "$header\n      $package\n$header\n\n" > "$tmpdir/$package.txt"
-      echo "$comments" >> "$tmpdir/$package.txt"
+      echo -en "$header\n      $package\n$header\n" > "$tmpdir/$package.txt"
+      echo "$comments" | sed "s/^${div}%%/\n$(printf $separator)/" >> "$tmpdir/$package.txt"
       $pager "$tmpdir/$package.txt"
     else
       echo -e "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
