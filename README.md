@@ -1,7 +1,7 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper ![AUR](https://img.shields.io/aur/votes/apacman.svg) and pacman wrapper [forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
+ArchLinux User Repository (AUR) helper and pacman wrapper ![Votes](https://img.shields.io/aur/votes/apacman.svg) ![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg&label=Star) [Forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
 
 **Total:**   ![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)
 

@@ -663,6 +663,7 @@ buildstatus() {
   if [[ $1 != 0 ]]; then
     echo
     echo -e "${COLOR7}==> ERROR:${ENDCOLOR} ${COLOR1}the build failed${ENDCOLOR}"
+    code='1'
   fi
 
   echo -e "${COLOR5}  ->${ENDCOLOR} ${COLOR1}Status${ENDCOLOR}"
@@ -1279,7 +1280,7 @@ if [[ $option = install ]]; then
     fi
   done
   installhandling "${packageargs[@]}"
-  exit
+  exit $code
 fi
 
 # Update (-Su) handling
@@ -1382,6 +1383,7 @@ if [[ $option = update ]]; then
     installhandling "${newpackages[@]}"
   fi
   [[ $noaur ]] || echo " local database is up to date"
+  exit $code
 fi
 
 # Download (-G) handling
@@ -1544,7 +1546,7 @@ if [[ $option = search || $option = searchinstall ]]; then
   # Remove the tmpfiles
   rm -f "$tmpdir/*search" &>/dev/null
   rm -f "$tmpdir/search.result" &>/dev/null
-  exit
+  exit $code
 fi
 
 # Info (-Si) handling
