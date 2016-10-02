@@ -1463,7 +1463,13 @@ if [[ $option = search || $option = searchinstall ]]; then
     wait
     cp "$tmpdir/${packageargs[0]}.search" "$tmpdir/search.results"
     for ((i=1 ; i<${#packageargs[@]} ; i++)); do
-      grep -xFf "$tmpdir/search.results" "$tmpdir/${packageargs[$i]}.search" > "$tmpdir/search.results-2"
+      regexmatch="$(echo ${packageargs[$i]} | tr -dc '0-9A-Za-z-.\n')"
+      if [[ ${packageargs[$i]} != $regexmatch ]]; then
+        echo -e "${COLOR6}notice:${ENDCOLOR} enabling regex mode (${packageargs[$i]})"
+        grep --color=always -E "${packageargs[$i]}" "$tmpdir/search.results" > "$tmpdir/search.results-2"
+      else
+        grep -xFf "$tmpdir/search.results" "$tmpdir/${packageargs[$i]}.search" > "$tmpdir/search.results-2"
+      fi
       mv "$tmpdir/search.results-2" "$tmpdir/search.results"
     done
     sed -i '/^$/d' "$tmpdir/search.results"
@@ -1471,7 +1477,7 @@ if [[ $option = search || $option = searchinstall ]]; then
     # Check versioning
     localpkgs=$(pacman -Q)
     for pkg in $(awk '{print $1}' "$tmpdir/search.results"); do
-      localver=$(echo "$localpkgs" | grep "^${pkg} " | awk '{print $2}');
+      localver=$(echo "$localpkgs" | grep -E "^${pkg}[[:space:]]" 2>/dev/null | awk '{print $2}');
       if [ ! -z "$localver" ]; then
         searchver=$(grep -E "^${pkg}[[:space:]]" "$tmpdir/search.results" | awk '{print $2}')
         if [ "$searchver" = "$localver" ]; then

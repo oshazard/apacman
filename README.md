@@ -1,7 +1,7 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper and pacman wrapper ![Votes](https://img.shields.io/aur/votes/apacman.svg) ![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg&label=Star) [Forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
+ArchLinux User Repository (AUR) helper and pacman wrapper ![Votes](https://img.shields.io/aur/votes/apacman.svg) ![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)
 
 **Total:**   ![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)
 
@@ -11,9 +11,13 @@ ArchLinux User Repository (AUR) helper and pacman wrapper ![Votes](https://img.s
 
 
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
+[Forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
+
 
 Changelog:
 ==========
+Version 2.9
+-----------
 * **NEW** -P parameter uses AUR passthrough for pkgfile
 * **NEW** Save installed AUR package metadata to database
 * **NEW** --nodatabase parameter does not store AUR database
