@@ -5,6 +5,8 @@ version="2.9"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Regex matching for searching packages
+# * Regex matching for installing packages
 # * -P           patched AUR passthrough for pkgfile
 # * Save installed AUR package metadata to database
 # * Enabled --progress by default
@@ -325,15 +327,33 @@ getlistpackages() {
   sed -e 's/iB$//' -e 's/\.00K/K/' -e 's/\.00B/B/' | awk '{printf "%-10s %-40s\n",$2,$1}' | sort -h
 }
 
-# Tests whether $1 exists on the aur
+# Tests whether package exists on the aur ($1 is name, $2 is dereferenced variable)
 existsinaur() {
-  rpcinfo "$1"
-  [[ "$(jshon -Qe resultcount -u < "$tmpdir/$1.info")" != "0" ]]
+  chosenpkg=$1
+  val="${!2}"
+
+  regexmatch="$(echo $val | tr -dc '0-9a-z-.\n')"
+  if [[ $val != $regexmatch ]]; then
+     matches=$(aurpkglist "$val")
+     selectprovider "$val" $matches
+     if [[ $providepkg ]]; then
+       eval "$2=\"$providepkg\"" 2>/dev/null
+       chosenpkg="$providepkg"
+     fi
+  fi
+
+  rpcinfo "$chosenpkg"
+  [[ "$(jshon -Qe resultcount -u < "$tmpdir/$chosenpkg.info")" != "0" ]]
 }
 
 # Tests whether $1 exists in pacman
 existsinpacman() {
-  $pacmanbin -Si -- "$1" &>/dev/null
+  chosenpkg=$1
+  if [[ $regex = 1 ]]; then
+    chosenpkg=$(selectprovider)
+  fi
+
+  $pacmanbin -Si -- "$chosenpkg" &>/dev/null
 }
 
 # Tests whether $1 is provided in pacman, sets globally accessibly providepkg var
@@ -345,8 +365,7 @@ providedinpacman() {
 }
 
 # Prompts options for virtual packages, $1 is package, $@ is array of packages
-selectprovider()
-{
+selectprovider() {
   virtpkg=$1
   shift
   virtual=($@)
@@ -357,7 +376,9 @@ selectprovider()
    providepkg="$virtual"
   elif [[ $# -gt 1 ]]; then
     # Multiple providers
-    echo -e "${COLOR5}:: ${COLOR1}There are $virtnum packages that provide $virtpkg:${ENDCOLOR}"
+    provmsg="provide"
+    [[ $regex = 1 ]] && provmsg="match" && unset regex
+    echo -e "${COLOR5}:: ${COLOR1}There are $virtnum packages that $provmsg $virtpkg:${ENDCOLOR}"
     n=1
     for v in ${virtual[@]}; do
       echo "${n}) $v";
@@ -427,7 +448,7 @@ finddeps() {
       fi
       if existsinpacman "$dep"; then
         pacmandeps+=("$dep")
-      elif existsinaur "$dep"; then
+      elif existsinaur "$dep" "dep"; then
         if [[ $aurdeps ]]; then
           aurdeps=("$dep" "${aurdeps[@]}")
         else
@@ -499,6 +520,14 @@ aurbar() {
   printf "%s%3s%%\r" ${endbar} ${perc}
 }
 
+aurpkglist() {
+  if ! [[ -f "$tmpdir/packages.lst" ]]; then
+    curl -Lfs "$PKGURL/packages.gz" | gunzip > "$tmpdir/packages.lst"
+  fi
+
+  grep -E "$1" "$tmpdir/packages.lst" | sort
+}
+
 rpcinfo() {
   if ! [[ -f "$tmpdir/$1.info" ]]; then
     curl -LfGs --data-urlencode "arg=$1" "$RPCURL=info" > "$tmpdir/$1.info"
@@ -568,10 +597,11 @@ pkginfo() {
 
 # Checks if package is newer on aur ($1 is package name, $2 is local version)
 aurversionisnewer() {
-  rpcinfo "$1"
+  package="$1"
+  rpcinfo "$package"
   unset aurversion
-  if existsinaur "$1"; then
-    aurversion="$(jshon -Q -e results -a -e Version -u < "$tmpdir/$1.info")"
+  if existsinaur "$package" "package"; then
+    aurversion="$(jshon -Q -e results -a -e Version -u < "$tmpdir/$package.info")"
     if [[ "$(LC_ALL=C vercmp "$aurversion" "$2")" -gt 0  ]]; then
       return 0
     fi
@@ -954,7 +984,7 @@ installhandling() {
       pacmanpackages+=("$providepkg")
     elif ! [[ $auronly ]] && existsinpacmangroup "$package"; then
       pacmanpackages+=("$package")
-    elif ! [[ $noaur ]] && existsinaur "$package"; then
+    elif ! [[ $noaur ]] && existsinaur "$package" "package"; then
       if finddeps "$package"; then
         # here is where dep dupes are created
         aurpackages+=("$package")
@@ -1275,8 +1305,14 @@ fi
 # Install (-S) handling
 if [[ $option = install ]]; then
   for pkg in ${packageargs[@]}; do
+    regexmatch="$(echo $pkg | tr -dc '0-9a-z-.\n')"
     if [[ "$pkg" =~ ^/ ]]; then
       err "${COLOR7}error:${ENDCOLOR} invalid package name $pkg"
+    elif [[ $regex = 1 ]]; then
+      true
+    elif [[ "$pkg" != "$regexmatch" ]]; then
+      regex='1'
+      echo -e "${COLOR6}notice:${ENDCOLOR} enabling regex mode ($pkg)"
     fi
   done
   installhandling "${packageargs[@]}"
@@ -1311,7 +1347,7 @@ if [[ $option = update ]]; then
       if isignored "$pkg"; then
         checkignores+=("${packages[i]}")
         continue
-      elif ! existsinaur "$pkg"; then
+      elif ! existsinaur "$pkg" "pkg"; then
         extinctpkgs+=("${packages[i]}")
         continue
       fi
@@ -1349,7 +1385,7 @@ if [[ $option = update ]]; then
       ver="${packages[i]##* }"
       if isignored "$pkg"; then
         checkignores+=("${packages[i]}")
-      elif ! existsinaur "$pkg"; then
+      elif ! existsinaur "$pkg" "pkg"; then
         extinctpkgs+=("${packages[i]}")
       elif aurversionisnewer "$pkg" "$ver"; then
         newpackages+=("$pkg")
@@ -1389,7 +1425,7 @@ fi
 # Download (-G) handling
 if [[ $option = download ]]; then
   for package in "${packageargs[@]}"; do
-    if ! [[ $noaur ]] && existsinaur "$package"; then
+    if ! [[ $noaur ]] && existsinaur "$package" "package"; then
       pkglist+=("$package")
     elif ! [[ $auronly ]] && existsinpacman "$package"; then
       abslist+=("$package")
@@ -1552,6 +1588,7 @@ if [[ $option = search || $option = searchinstall ]]; then
   # Remove the tmpfiles
   rm -f "$tmpdir/*search" &>/dev/null
   rm -f "$tmpdir/search.result" &>/dev/null
+  rm -f "$tmpdir/packages.lst" &>/dev/null
   exit $code
 fi
 
