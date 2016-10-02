@@ -5,6 +5,7 @@ version="2.9"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * --testing    for unit testing purposes only
 # * Regex matching for searching packages
 # * Regex matching for installing packages
 # * -P           patched AUR passthrough for pkgfile
@@ -183,6 +184,7 @@ usage() {
   echo '    --skipcache  - skips check for pre-built package in cache directory'
   echo '    --skipinteg  - when using makepkg, do not check md5s'
   echo '    --skiptest   - when using makepkg, do not parse check() test deps'
+  echo '    --testing    - for unit testing purposes only'
   echo '    --warn       - treat errors as non-fatal warnings'
   echo '    -v           - turns on verbose output'
   echo '    -V           - display version'
@@ -220,7 +222,9 @@ infoconf() {
 
 # Called whenever anything needs to be run as root ($@ is the command)
 runasroot() {
-  if [[ $UID -eq 0 ]]; then
+  if [[ $testing == 1 ]]; then
+    fakechroot fakeroot "$@"
+  elif [[ $UID -eq 0 ]]; then
     "$@"
   elif sudo -v &>/dev/null && sudo -l "$@" &>/dev/null; then
     sudo -E "$@"
@@ -1252,6 +1256,7 @@ while [[ $1 ]]; do
     '--skipcache') skipcache='1' ;;
     '--skipinteg') skipinteg='1' ; MAKEPKGOPTS+=("--skipinteg");;
     '--skiptest') skiptest='1' ; MAKEPKGOPTS+=("--nocheck");;
+    '--testing') testing='1' ;;
     '--warn') warn='1' ;;
     '-h'|'--help') usage ;;
     '-v'|'--verbose') verbose='1' ;;
