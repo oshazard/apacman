@@ -81,6 +81,7 @@ pkgfiledb='/var/cache/pkgfile/aur.files'
 localrepo='aur'
 builddir="${TMPDIR:-/tmp}/pkgbuild-$UID"
 tmpdir="${TMPDIR:-/tmp}/apacmantmp-$UID"
+testdir="${TMPDIR:-/tmp}/apacman-testing"
 
 editor="vi"
 [[ $EDITOR ]] && editor="$EDITOR"
@@ -925,9 +926,10 @@ aurinstall() {
   # Save packages
   pkgtar=$(ls $1-*$PKGEXT 2>/dev/null | tail -n 1)
   if [[ $pkgtar ]]; then
-    [ -d $savedir ] || runasroot mkdir -p $savedir
+    [ -d $savedir ] || mkdir -p $savedir 2>/dev/null || runasroot mkdir -p $savedir
     echo -e "${COLOR5}  -> ${COLOR1}Saving package:${ENDCOLOR} ${pkgtar}"
-    runasroot cp ${pkgtar} $savedir/
+    cp ${pkgtar} $savedir/ 2>/dev/null || runasroot cp ${pkgtar} $savedir/
+    echo -e "${COLOR5}  -> ${COLOR1}Installing ${1}${ENDCOLOR}"
     buildinstall $1 $2 ${savedir}/$pkgtar
   fi
 }
@@ -1256,7 +1258,7 @@ while [[ $1 ]]; do
     '--skipcache') skipcache='1' ;;
     '--skipinteg') skipinteg='1' ; MAKEPKGOPTS+=("--skipinteg");;
     '--skiptest') skiptest='1' ; MAKEPKGOPTS+=("--nocheck");;
-    '--testing') testing='1' ;;
+    '--testing') testing='1' ; savedir="$testdir" ;;
     '--warn') warn='1' ;;
     '-h'|'--help') usage ;;
     '-v'|'--verbose') verbose='1' ;;
@@ -1278,6 +1280,7 @@ done
 # Set tmpfile stuff, clean tmpdir
 rm -rf "$tmpdir" &>/dev/null
 mkdir -p "$tmpdir"
+cd
 
 # Determine architecture
 makearch=$(grep ^CARCH= "$makepkgconf" 2>/dev/null | grep -o -e =.*[0-9A-Za-z] | sed 's/^="//');
