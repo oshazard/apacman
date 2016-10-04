@@ -237,7 +237,10 @@ runasroot() {
 
 # debugging for curl ($1 is curl exit code, $2 package name)
 curlyq() {
-  if [ $1 -ne 0 -a $1 -ne 7 ]; then
+  if [ $1 -eq 6 ]; then
+    offline='1'
+    echo -e "${COLOR7}:: ${COLOR1}No internet connection${ENDCOLOR}"
+  elif [ $1 -ne 0 -a $1 -ne 7 ]; then
     echo -e "${COLOR6}notice:${ENDCOLOR} curl exited with code $1 on $2"
     if deptest man; then
       curlman=$(man curl | sed '1,/^EXIT CODES/d' | grep " $1 ")
@@ -769,7 +772,11 @@ cacheinstall() {
     pkgrelease="$1-$pkgver-$pkgrel"
   fi
 
-  echo -e "${COLOR6}notice:$ENDCOLOR installing $pkgrelease from cache"
+  if [[ $offline = '1' ]]; then
+     offlinemsg="${COLOR4} offline${ENDCOLOR}"
+  fi
+
+  echo -e "${COLOR6}notice:${ENDCOLOR}${offlinemsg} installing $pkgrelease from cache"
   remains=(${remains[@]/$1/})
   buildinstall $1 $2 $3
 }
@@ -816,8 +823,36 @@ removepgpkeys() {
   fi
 }; export -f removepgpkeys
 
+# Installs cached packages offline ($1 is package, $2 is dependency or explicit)
+offlineinstall() {
+  cachedpkgs=$(ls ${savedir}/*-{any,${makearch}}.pkg.{tar,tar.xz} 2>/dev/null | awk -F "$savedir/" '{print $2}')
+  cachedpkgs=$(echo "$cachedpkgs" | awk -F "-" '{for(i=1;i<=NF-3;++i) printf $i"-"; print " " $(NF-2) " " $(NF-1) " " $NF}' 2>/dev/null)
+  cachedarray=$(echo "$cachedpkgs" | sed 's/- / /' | grep "^$1 " | sort -n | tail -n 1)
+  if [[ $cachedarray ]]; then
+    pkgver=$(echo "$cachedarray" | awk '{print $2}')
+    pkgrel=$(echo "$cachedarray" | awk '{print $3}')
+    pkgext=$(echo "$cachedarray" | awk '{print $4}')
+    pkgfile=$(ls ${savedir}/${1}-${pkgver}-${pkgrel}-${pkgext} 2>/dev/null)
+  fi
+
+  if [ -f "$pkgfile" ]; then
+    cacheinstall "$1" "$2" "$pkgfile"
+  else
+    err "Package \`$1' does not exist in cache."
+  fi
+}
+
 # Installs packages from aur ($1 is package, $2 is dependency or explicit)
 aurinstall() {
+  if [[ $offline = '1' ]]; then
+    offlineinstall "$1" "$2"
+  else
+    aurmakepkg "$1" "$2"
+  fi
+}
+
+# Installs packages from aur ($1 is package, $2 is dependency or explicit)
+aurmakepkg() {
   unset validpgpkeys
   dir="${builddir}/$1"
   sourcemakepkgconf
