@@ -5,6 +5,7 @@ version="2.9"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Install AUR packages offline
 # * --testing    for unit testing purposes only
 # * Regex matching for searching packages
 # * Regex matching for installing packages
@@ -864,6 +865,18 @@ aurmakepkg() {
   else
     [[ -d "$dir" ]] && rm -rf "$dir"
     mkdir -p "$builddir"
+
+    # Check umask permissions
+    otherbits=$(ls -ld "$builddir" | awk '{print $1}' | cut -c 8,10)
+    if [[ $otherbits != "rx" ]]; then
+      mask=$(umask 2>/dev/null)
+      if [[ $mask != *022 ]]; then
+        echo -e "${COLOR6}warning:${ENDCOLOR} umask set to ${COLOR4}${mask}${ENDCOLOR} (should be 022)"
+      fi
+      rmdir "$builddir"
+      err "${COLOR7}error:${COLOR1} no write permission in ${builddir}${ENDCOLOR}"
+    fi
+
     cd "$builddir"
     curl -Lfs "$(pkglink $1)" > "$1.tar.gz"
     cstatus=$?; curlyq "$cstatus" "$1"
