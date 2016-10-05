@@ -10,7 +10,7 @@ ArchLinux User Repository (AUR) helper and pacman wrapper
 **Current:**  [![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)](https://github.com/oshazard/apacman/releases/latest)
 
 **Votes:**    [![Votes](https://img.shields.io/aur/votes/apacman.svg)](https://aur.archlinux.org/packages/apacman/) [![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)](https://github.com/oshazard/apacman/stargazers)
-If you like this utility, please upvote it.
+(if you like this software, please upvote it on AUR)
 
 
 [AUR package](https://aur.archlinux.org/packages/apacman/)
@@ -29,7 +29,9 @@ Installation:
 
 Changelog:
 ==========
+
 Version 3.0
+----------
 * **NEW** Add alternative --flag=parameter syntax for relevant options
 * **NEW** Fix for installing groups and virtual packages
 * **NEW** Fix to allow installing cached packages without Internet
