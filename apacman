@@ -144,8 +144,10 @@ version() {
 }
 
 usage() {
-  echo 'usage: apacman [option] [package] [package] [...]'
+  echo 'usage: apacman <operation> [option] [package] [package] [...]'
+  echo 'If no operation is specified, searches and installs packages by number'
   echo
+  echo 'OPERATIONS'
   echo '    -S           - installs package'
   echo '    -Syu|-Su     - updates all packages, also takes -uu and -yy options'
   echo '    -Ss|-Ssq     - searches for package'
@@ -155,6 +157,7 @@ usage() {
   echo '    -P           - passthrough for pkgfile command'
   echo '    -W           - view web comments for package'
   echo
+  echo 'OPTIONS'
   echo '    --asdeps     - install AUR packages marked as dependencies'
   echo '    --asexplicit - install AUR packages marked as explicit'
   echo '    --auronly    - only do actions for AUR'
@@ -214,9 +217,9 @@ infoconf() {
     varstatus $i
   done
 
-  vars="asdeps asexplicit auronly buildonly cachevcs ignorearch keepkeys legacy"
-  vars="$vars needed noaur noconfirm nodatabase noedit nofail preview progress"
-  vars="$vars purgebuild purgekeys quiet skipcache skipinteg skiptest warn"
+  vars="asdeps asexplicit auronly buildonly cachevcs force gendb ignorearch keepkeys"
+  vars="$vars legacy needed noaur noconfirm nodatabase noedit nofail preview progress"
+  vars="$vars purgebuild purgekeys quiet skipcache skipinteg skiptest testing warn"
   for j in $vars; do
     varstatus $j
   done
@@ -241,7 +244,7 @@ curlyq() {
   if [ $1 -eq 6 ]; then
     offline='1'
     echo -e "${COLOR7}:: ${COLOR1}No internet connection${ENDCOLOR}"
-  elif [ $1 -ne 0 -a $1 -ne 7 -a -ne 22 ]; then
+  elif [ $1 -ne 0 -a $1 -ne 7 -a $1 -ne 22 ]; then
     echo -e "${COLOR6}notice:${ENDCOLOR} curl exited with code $1 on $2"
     if deptest man; then
       curlman=$(man curl | sed '1,/^EXIT CODES/d' | grep " $1 ")
@@ -1240,6 +1243,19 @@ nap() {
   done
 }
 
+# Parse --config parameter early
+loadconfig() {
+  for flag in $@; do
+    if [[ $nextflag = 1 ]]; then
+      apacmanconf="$flag"
+      unset nextflag
+      return
+    elif [[ $flag = "--config" ]]; then
+      nextflag='1'
+    fi
+  done
+}
+
 # Wrap pacman parameters
 pacwrap() {
   if [[ $1 = -Q* ]]; then
@@ -1257,6 +1273,7 @@ pacwrap() {
 }
 
 # Override defaults
+loadconfig $@
 sourceapacmanconf
 
 # Argument parsing
@@ -1277,7 +1294,7 @@ while [[ $1 ]]; do
     '--auronly') auronly='1' ; unset noaur ;;
     '--buildonly') buildonly='1' ;;
     '--cachevcs') cachevcs='1' ;;
-    '--config') config='1' ; apacmanconf="$2" ; shift ;;
+    '--config') config='1' ; shift ;;
     '--devel') devel='1' ;;
     '--edit') unset noedit ;;
     '--force') force='1' PACOPTS+=("--force");;
