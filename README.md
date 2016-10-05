@@ -17,6 +17,17 @@ ArchLinux User Repository (AUR) helper and pacman wrapper ![Votes](https://img.s
 
 Changelog:
 ==========
+Version 3.0
+* **NEW** Add alternative --flag=parameter syntax for relevant options
+* **NEW** Fix for installing groups and virtual packages
+* **NEW** Fix to allow installing cached packages without Internet
+* **NEW** Implement unit tests using [bats](https://github.com/sstephenson/bats) (WIP)
+* **NEW** Add regex/wildcard support to -S and -Ss
+* **NEW** Return code 1 on errors
+* **NEW** Improve viewing package comments
+* **NEW** Update manpages
+* Closed 17 issues since last release
+
 Version 2.9
 -----------
 * **NEW** -P parameter uses AUR passthrough for pkgfile
