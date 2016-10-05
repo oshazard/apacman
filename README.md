@@ -10,6 +10,7 @@ ArchLinux User Repository (AUR) helper and pacman wrapper
 **Current:**  [![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)](https://github.com/oshazard/apacman/releases/latest)
 
 **Votes:**    [![Votes](https://img.shields.io/aur/votes/apacman.svg)](https://aur.archlinux.org/packages/apacman/) [![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)](https://github.com/oshazard/apacman/stargazers)
+If you like this utility, please upvote it.
 
 
 [AUR package](https://aur.archlinux.org/packages/apacman/)
@@ -22,7 +23,9 @@ ArchLinux User Repository (AUR) helper and pacman wrapper
 Installation:
 ==========
 `curl -O "https://raw.githubusercontent.com/oshazard/apacman/master/apacman"`
+
 `bash ./apacman -S apacman`
+
 
 Changelog:
 ==========
