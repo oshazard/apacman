@@ -3,19 +3,26 @@ apacman
 
 ArchLinux User Repository (AUR) helper and pacman wrapper
 
-**Total:**   ![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)
+**Total:**   [![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)](https://github.com/oshazard/apacman/releases)
 
-**Previous:** ![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.6/total.svg) ![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.9/total.svg)
+**Previous:** [![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.6/total.svg)](https://github.com/oshazard/apacman/releases/tag/v2.6) [![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.9/total.svg)](https://github.com/oshazard/apacman/releases/tag/v2.9)
 
-**Current:**  ![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)
+**Current:**  [![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)](https://github.com/oshazard/apacman/releases/latest)
 
-**Votes:**    ![Votes](https://img.shields.io/aur/votes/apacman.svg) ![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)
+**Votes:**    [![Votes](https://img.shields.io/aur/votes/apacman.svg)](https://aur.archlinux.org/packages/apacman/) [![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)](https://github.com/oshazard/apacman/stargazers)
 
+
+[AUR package](https://aur.archlinux.org/packages/apacman/)
 
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
 
 [Forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
 
+
+Installation:
+==========
+`curl -O "https://raw.githubusercontent.com/oshazard/apacman/master/apacman"`
+`bash ./apacman -S apacman`
 
 Changelog:
 ==========
