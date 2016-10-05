@@ -112,7 +112,7 @@ _WIDTH="$(stty size | cut -d ' ' -f 2)"
 trap ctrlc INT
 ctrlc() {
   echo
-  exit
+  exit $code
 }
 
 err() {
@@ -241,7 +241,7 @@ curlyq() {
   if [ $1 -eq 6 ]; then
     offline='1'
     echo -e "${COLOR7}:: ${COLOR1}No internet connection${ENDCOLOR}"
-  elif [ $1 -ne 0 -a $1 -ne 7 ]; then
+  elif [ $1 -ne 0 -a $1 -ne 7 -a -ne 22 ]; then
     echo -e "${COLOR6}notice:${ENDCOLOR} curl exited with code $1 on $2"
     if deptest man; then
       curlman=$(man curl | sed '1,/^EXIT CODES/d' | grep " $1 ")
@@ -1034,10 +1034,10 @@ installhandling() {
     # Determine whether package is in pacman repos
     if ! [[ $auronly ]] && existsinpacman "$package"; then
       pacmanpackages+=("$package")
-    elif ! [[ $auronly ]] && providedinpacman "$package"; then
-      pacmanpackages+=("$providepkg")
     elif ! [[ $auronly ]] && existsinpacmangroup "$package"; then
       pacmanpackages+=("$package")
+    elif ! [[ $auronly ]] && providedinpacman "$package"; then
+      pacmanpackages+=("$providepkg")
     elif ! [[ $noaur ]] && existsinaur "$package" "package"; then
       if finddeps "$package"; then
         # here is where dep dupes are created
@@ -1093,7 +1093,7 @@ installhandling() {
   fi
   if [[ -z $aurtargets ]]; then
     listbundle
-    exit
+    exit $code
   fi
 
   # Test if aurpackages are already installed; echo warning if so
@@ -1336,7 +1336,7 @@ makearch=$(grep ^CARCH= "$makepkgconf" 2>/dev/null | grep -o -e =.*[0-9A-Za-z] |
 # Check for new packages
 if [[ $quickcheck == 1 ]]; then
   run_quick_check
-  exit
+  exit $code
 fi
 
 # Sanity checks
@@ -1349,13 +1349,13 @@ fi
 # Generate DB (--gendb) handling
 if [[ $option = gendb ]]; then
   aurgendb
-  exit
+  exit $code
 fi
 
 # List (-L) handling
 if [[ $option = list ]]; then
   getlistpackages
-  exit
+  exit $code
 fi
 
 # Install (-S) handling
@@ -1618,7 +1618,7 @@ if [[ $option = search || $option = searchinstall ]]; then
     allpackages=( "${pacname[@]}" "${aurname[@]}" )
 
     # Exit if there are no matches
-    [[ $allpackages ]] || exit
+    [[ $allpackages ]] || exit 1
 
     # Prompt for numbers
     echo
@@ -1661,7 +1661,7 @@ if [[ $option = info ]]; then
       results="$(sed -r "s|^(URL[^:]*:)(.*)$|\1$S${COLOR4}\2$S${ENDCOLOR}|" <<< "$results")"
       results="$(sed -r "s|^[^ ][^:]*:|$S${COLOR1}&$S${ENDCOLOR}|" <<< "$results")"
       echo -e "$results"
-      exit
+      exit $code
     elif ! [[ $noaur ]]; then # Check to see if it is in the aur
       pkginfo "$package" "$preview"
       [[ -s "$tmpdir/$package.PKGBUILD" ]] || err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
