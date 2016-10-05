@@ -1,10 +1,11 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="2.9"
+version="3.0"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * --savedir <dir>, --savedir=<dir>
 # * Install AUR packages offline
 # * --testing    for unit testing purposes only
 # * Regex matching for searching packages
@@ -186,6 +187,7 @@ usage() {
   echo '    --purgekeys  - remove trusted PGP keys'
   echo '    --quickcheck - check for updates and exit'
   echo '    --quiet      - only output package name for searches'
+  echo '    --savedir    - takes a path as the cache directory'
   echo '    --skipcache  - skips check for pre-built package in cache directory'
   echo '    --skipinteg  - when using makepkg, do not check md5s'
   echo '    --skiptest   - when using makepkg, do not parse check() test deps'
@@ -228,14 +230,14 @@ infoconf() {
 # Called whenever anything needs to be run as root ($@ is the command)
 runasroot() {
   if [[ $testing == 1 ]]; then
-    fakechroot fakeroot "$@"
+    fakeroot "$@" || code='1'
   elif [[ $UID -eq 0 ]]; then
-    "$@"
+    "$@" || code='1'
   elif sudo -v &>/dev/null && sudo -l "$@" &>/dev/null; then
-    sudo -E "$@"
+    sudo -E "$@" || code='1'
   else
     echo -n "root "
-    su -c "$(printf '%q ' "$@")"
+    su -c "$(printf '%q ' "$@")" || code='1'
   fi
 }
 
@@ -1252,6 +1254,9 @@ loadconfig() {
       return
     elif [[ $flag = "--config" ]]; then
       nextflag='1'
+    elif [[ $flag = --config* ]]; then
+      apacmanconf="$flag"
+      return
     fi
   done
 }
@@ -1295,11 +1300,13 @@ while [[ $1 ]]; do
     '--buildonly') buildonly='1' ;;
     '--cachevcs') cachevcs='1' ;;
     '--config') config='1' ; shift ;;
+    --config=*) config='1' ; equals+=("--config") ;;
     '--devel') devel='1' ;;
     '--edit') unset noedit ;;
     '--force') force='1' PACOPTS+=("--force");;
     '--gendb') option=gendb ; escaperope='1' ;;
     '--ignore') ignorearg="$2" ; PACOPTS+=("--ignore" "$2") ; shift ;;
+    --ignore=*) ignorearg="$1" ; equals+=("--ignore") ;;
     '--ignorearch') MAKEPKGOPTS+=("--ignorearch");;
     '--keepkeys') keepkeys='1' ; export keepkeys ;;
     '--legacy') legacy='1' ;;
@@ -1320,6 +1327,8 @@ while [[ $1 ]]; do
     '--purgekeys') purgekeys='1' ;;
     '--quickcheck') quickcheck='1' ;;
     '--quiet') quiet='1' ;;
+    '--savedir') savedir="$2" ; shift ;;
+    --savedir=*) savedir="$1"; equals+=("--savedir") ;;
     '--skipcache') skipcache='1' ;;
     '--skipinteg') skipinteg='1' ; MAKEPKGOPTS+=("--skipinteg");;
     '--skiptest') skiptest='1' ; MAKEPKGOPTS+=("--nocheck");;
@@ -1340,6 +1349,18 @@ while [[ $1 ]]; do
     *) packageargs+=("$1") ;;
   esac
   shift
+done
+
+# Handles alternative syntax --flag=parameter
+for eqvar in "${equals[@]}"; do
+  if [[ $eqvar = "--config" ]]; then
+    apacmanconf=$(echo "$apacmanconf" | awk -F "=" '{print $2}')
+  elif [[ $eqvar = "--ignore" ]]; then
+    ignorearg=$(echo "$ignorearg" | awk -F "=" '{print $2}')
+    PACOPTS+=("--ignore" "$ignorearg")
+  elif [[ $eqvar = "--savedir" ]]; then
+    savedir=$(echo "$savedir" | awk -F "=" '{print $2}')
+  fi
 done
 
 # Set tmpfile stuff, clean tmpdir

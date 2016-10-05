@@ -2,12 +2,12 @@
 .\"     Title: apacman
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 09/29/2016
+.\"      Date: 10/05/2016
 .\"    Manual: apacman Manual
 .\"    Source: apacman
 .\"  Language: English
 .\"
-.TH "APACMAN" "8" "09/29/2017" "apacman" "apacman Manual"
+.TH "APACMAN" "8" "10/05/2016" "apacman" "apacman Manual"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -25,8 +25,8 @@ apacman \- AUR wrapper forked from packer
 \fIapacman\fR <operation> [options] [packages]
 .SH "DESCRIPTION"
 .sp
-apacman is a bash wrapper forked from packer for pacman and the ArchLinux User Repository (AUR)\&. It adds package saving functionality and some extra 
-pass-through options for makepkg and pacman. 
+apacman is a bash wrapper forked from packer for pacman and the ArchLinux User Repository (AUR)\&. It adds package saving functionality and some extra
+pass-through options for makepkg and pacman.
 .SH "OPERATIONS"
 .PP
 \fB\-Ss\fR
@@ -97,7 +97,7 @@ Build packages but do not install them then post\-install remove unneeded build 
 \fBNote:\fR list of package filenames stored in \fI$tmpdir/bundle\&.lst\fB
 .RE
 .PP
-\fB\-\-config\fR <\'file\'>
+\fB\-\-config\fR \fIfilename\fR, \fB\-\-config=\fR\fIfilename\fR
 .RS 4
 Use alternate configuration file\&.
 .RE
@@ -122,7 +122,7 @@ Always ask to edit PKGBUILD (overrides 'noedit' option)\&.
 Generate AUR local package database\&.
 .RE
 .PP
-\fB\-\-ignore\fR <\'package\'>
+\fB\-\-ignore\fR \fIpackage\fR, \fB\-\-ignore=\fR\fIpkg1\fR,\fIpkg2\fR,\fIpkg3\fR
 .RS 4
 Ignore packages\&. Separate package names with a comma\&.
 .RE
@@ -215,6 +215,11 @@ Check for updates and exit\&.
 \fB\-\-quiet\fR
 .RS 4
 Turn off package descriptions\&.
+.RE
+.PP
+\fB\-\-savedir\fR \fIdirectory\fR, \fB\-\-savedir=\fR\fIdirectory\fR
+.RS 4
+Use alternate cache directory\&.
 .RE
 .PP
 \fB\-\-skipcache\fR
@@ -382,6 +387,8 @@ IgnorePkg
 \fBapacman.conf\fR(5)
 .sp
 \fBpacman\fR(8)
+.sp
+\fBpkgfile\fR(1)
 .sp
 \fBpacker\fR(8)
 

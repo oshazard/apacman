@@ -68,7 +68,7 @@ virtualpkg="ttf-font"
   [ "$status" -eq 0 ]
 }
 
-@test "invoke with '-S' parameter fails to build package from AUR" {
+@test "invoke with '-S' parameter fails to build broken package from AUR" {
   run $APACMAN $testing $noconfirm $buildonly $skipcache -S $badpkg
   [ "$status" -eq 1 ]
 }
