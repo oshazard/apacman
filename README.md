@@ -1,13 +1,15 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper and pacman wrapper ![Votes](https://img.shields.io/aur/votes/apacman.svg) ![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)
+ArchLinux User Repository (AUR) helper and pacman wrapper
 
 **Total:**   ![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)
 
-**Previous:** ![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.6/total.svg)
+**Previous:** ![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.6/total.svg) ![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.9/total.svg)
 
 **Current:**  ![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)
+
+**Votes:**    ![Votes](https://img.shields.io/aur/votes/apacman.svg) ![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)
 
 
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
@@ -26,7 +28,7 @@ Version 3.0
 * **NEW** Return code 1 on errors
 * **NEW** Improve viewing package comments
 * **NEW** Update manpages
-* Closed 17 issues since last release
+* Closed 10+ issues since last release
 
 Version 2.9
 -----------
