@@ -446,7 +446,7 @@ _apacman_zsh_comp() {
 	esac
 }
 
-_pacman_comp() {
+_apacman_comp() {
 	case "$service" in
 		apacman)
 			_apacman_zsh_comp "$@"
