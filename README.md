@@ -1,7 +1,7 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper and pacman wrapper
+ArchLinux User Repository (AUR) helper and pacman wrapper [![gitter](https://img.shields.io/gitter/room/apacman/gitter.svg?maxAge=2592000)](https://gitter.im/apacman/Lobby)
 
 **Total:**   [![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)](https://github.com/oshazard/apacman/releases)
 
@@ -13,7 +13,7 @@ ArchLinux User Repository (AUR) helper and pacman wrapper
 (if you like this software, please upvote it on AUR)
 
 
-[AUR package](https://aur.archlinux.org/packages/apacman/)
+[![AUR package](https://img.shields.io/aur/version/apacman.svg?label=AUR%20package&maxAge=2592000&style=plastic)](https://aur.archlinux.org/packages/apacman/)
 
 [Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
 
@@ -22,6 +22,8 @@ ArchLinux User Repository (AUR) helper and pacman wrapper
 
 Installation:
 ==========
+`pacman -S --needed jshon`
+
 `curl -O "https://raw.githubusercontent.com/oshazard/apacman/master/apacman"`
 
 `bash ./apacman -S apacman`
