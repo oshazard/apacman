@@ -22,7 +22,7 @@ ArchLinux User Repository (AUR) helper and pacman wrapper [![gitter](https://img
 
 Installation:
 ==========
-`pacman -S --needed jshon`
+`pacman -S --needed --asdeps jshon`
 
 `curl -O "https://raw.githubusercontent.com/oshazard/apacman/master/apacman"`
 
