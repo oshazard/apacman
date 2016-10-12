@@ -1,0 +1,643 @@
+<!-- Creator     : groff version 1.22.3 -->
+<!-- CreationDate: Wed Oct 12 15:38:45 2016 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>APACMAN</title>
+
+</head>
+<body>
+
+<h1 align="center">APACMAN</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPERATIONS">OPERATIONS</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#INTERACTIVE MODE">INTERACTIVE MODE</a><br>
+<a href="#EXAMPLE USAGE">EXAMPLE USAGE</a><br>
+<a href="#CONFIGURATION">CONFIGURATION</a><br>
+<a href="#EXIT CODES">EXIT CODES</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">apacman &minus;
+AUR wrapper forked from packer</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>apacman</i>
+&lt;operation&gt; [options] [packages]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">apacman is a
+bash wrapper forked from packer for pacman and the ArchLinux
+User Repository (AUR). It adds package saving functionality
+and some extra pass-through options for makepkg and
+pacman.</p>
+
+<h2>OPERATIONS
+<a name="OPERATIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;Ss</b></p>
+
+<p style="margin-left:17%;">Search for a package.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;S</b></p>
+
+<p style="margin-left:17%;">Install a package.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;Syu</b></p>
+
+<p style="margin-left:17%;">Sync with repositories.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;Si</b></p>
+
+<p style="margin-left:17%;">Show information for a
+package.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;G</b></p>
+
+<p style="margin-left:17%;">Download and extract ABS and
+AUR package tarballs, but don&rsquo;t install anything.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;L</b></p>
+
+<p style="margin-left:17%;">List installed packages by size
+(replacement for <i>pacsysclean</i> command).</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;P,
+&minus;&minus;pkgfile</b></p>
+
+<p style="margin-left:17%;">Patched AUR passthrough for
+<i>pkgfile</i> command.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;W</b></p>
+
+<p style="margin-left:17%;">View AUR comments.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;V</b></p>
+
+<p style="margin-left:17%;">Show apacman version.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;v,
+&minus;&minus;verbose</b></p>
+
+<p style="margin-left:17%;">Show enabled options.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;h,
+&minus;&minus;help</b></p>
+
+<p style="margin-left:17%;">Show apacman usage.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;auronly</b></p>
+
+<p style="margin-left:17%;">Only perform commands for the
+AUR.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;buildonly</b></p>
+
+<p style="margin-left:17%;">Build packages but do not
+install them then post&minus;install remove unneeded build
+makedepends.</p>
+
+<p style="margin-left:17%; margin-top: 1em"><b>Note:</b>
+list of package filenames stored in
+<i>$tmpdir/bundle.lst</i></p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;config</b>
+<i>filename</i>,
+<b>&minus;&minus;config=</b><i>filename</i></p>
+
+<p style="margin-left:17%;">Use alternate configuration
+file.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;cachevcs</b></p>
+
+<p style="margin-left:17%;">installs cached VCS (git, svn,
+hg) packages newer than AUR PKGBUILDs.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;devel</b></p>
+
+<p style="margin-left:17%;">Update development packages.
+(cvs, git...)</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;edit</b></p>
+
+<p style="margin-left:17%;">Always ask to edit PKGBUILD
+(overrides &rsquo;noedit&rsquo; option).</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;gendb</b></p>
+
+<p style="margin-left:17%;">Generate AUR local package
+database.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;ignore</b>
+<i>package</i>,
+<b>&minus;&minus;ignore=</b><i>pkg1</i>,<i>pkg2</i>,<i>pkg3</i></p>
+
+<p style="margin-left:17%;">Ignore packages. Separate
+package names with a comma.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;ignorearch</b></p>
+
+<p style="margin-left:17%;">ignores architectures specified
+in PKGBUILD.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;keepkeys</b></p>
+
+<p style="margin-left:17%;">Do not remove imported PGP
+keys.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;legacy</b></p>
+
+<p style="margin-left:17%;">Use AUR3 repo rather than
+default AUR4 (deprecated).</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;needed</b></p>
+
+<p style="margin-left:17%;">Does not install up-to-date
+packages.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;noaur</b></p>
+
+<p style="margin-left:17%;">Do not perform commands for the
+AUR.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;noconfirm</b></p>
+
+<p style="margin-left:17%;">Perform commands without
+confirmation from the user.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;nodatabase</b></p>
+
+<p style="margin-left:17%;">Do not store AUR database.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;noedit</b></p>
+
+<p style="margin-left:17%;">Perform commands without asking
+if the user wants to edit any installation files.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;nofail</b></p>
+
+<p style="margin-left:17%;">Immediately quit if any package
+does not build successfully.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;noprogress</b></p>
+
+<p style="margin-left:17%;">Do not replace terminal title
+with transaction status.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;nosource</b></p>
+
+<p style="margin-left:17%;">Do not source PKGBUILDs, for
+security reasons (WIP).</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;notify</b></p>
+
+<p style="margin-left:17%;">Notification via
+<i>notify&minus;send</i> with transaction status.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;preview</b></p>
+
+<p style="margin-left:17%;">Always offer to edit the
+pkgbuild before sourcing it.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;progress</b></p>
+
+<p style="margin-left:17%;">Terminal title transaction
+status.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;purgebuild</b></p>
+
+<p style="margin-left:17%;">Post&minus;install remove
+unneeded build makedepends.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;purgekeys</b></p>
+
+<p style="margin-left:17%;">Remove trusted PGP keys.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;quickcheck</b></p>
+
+<p style="margin-left:17%;">Check for updates and exit.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;quiet</b></p>
+
+<p style="margin-left:17%;">Turn off package
+descriptions.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;savedir</b>
+<i>directory</i>,
+<b>&minus;&minus;savedir=</b><i>directory</i></p>
+
+<p style="margin-left:17%;">Use alternate cache
+directory.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;skipcache</b></p>
+
+<p style="margin-left:17%;">skips check for pre-built
+package in cache directory.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;skipinteg</b></p>
+
+<p style="margin-left:17%;">Skip the integrity check by
+ignoring AUR package MD5 sums.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;skiptest</b></p>
+
+<p style="margin-left:17%;">Avoid install of check unit
+test packages.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;&minus;warn</b></p>
+
+<p style="margin-left:17%;">Treat errors as non-fatal
+warnings (only enable if you are know what you are
+doing.)</p>
+
+<h2>INTERACTIVE MODE
+<a name="INTERACTIVE MODE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Use apacman
+without any operations or options to use the interactive
+mode. apacman will show a numbered list of search results.
+To install a package, enter the corresponding number.</p>
+
+<h2>EXAMPLE USAGE
+<a name="EXAMPLE USAGE"></a>
+</h2>
+
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Sync and
+update all packages: apacman &minus;Syu</p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Update
+only AUR packages: apacman &minus;Syu
+&minus;&minus;auronly</p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Update,
+and reinstall packages that were installed from a revision
+control source: apacman &minus;Syu &minus;&minus;devel</p>
+
+<p style="margin-left:11%; margin-top: 1em">For a package
+called <i>name</i>:</p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Search:
+apacman &minus;Ss <i>name</i></p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Install:
+apacman &minus;S <i>name</i></p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Install
+without confirmations: apacman &minus;S
+&minus;&minus;noconfirm <i>name</i></p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Get
+information about a package: apacman &minus;Si
+<i>name</i></p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull; Search
+and install in interactive mode: apacman <i>name</i></p>
+
+<h2>CONFIGURATION
+<a name="CONFIGURATION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">apacman
+defaults to saving succesfully built packages to
+/var/cache/apacman/pkg.</p>
+
+<p style="margin-left:11%; margin-top: 1em">apacman uses
+the AUR package cache directory if applicable (unless
+&minus;&minus;skipcache parameter)</p>
+
+<p style="margin-left:11%; margin-top: 1em">By default VCS
+package versions are compared via PKGBUILD in AUR (unless
+&minus;&minus;cachevcs parameter)</p>
+
+<p style="margin-left:11%; margin-top: 1em">apacman output
+will be colorized unless the environmental variable COLOR is
+set to &lsquo;NO&rsquo;.</p>
+
+<p style="margin-left:11%; margin-top: 1em">To manually
+edit files, apacman uses the EDITOR variable. If EDITOR is
+not set then the default editor is vi.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Packages are
+built in the TMPDIR path. If the TMPDIR variable is not set
+then the default path is /tmp</p>
+
+<p style="margin-left:11%; margin-top: 1em">Default
+configuration file:</p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull;
+/etc/apacman.conf</p>
+
+<p style="margin-left:11%; margin-top: 1em">These settings
+are used from /etc/pacman.conf:</p>
+
+<p style="margin-left:17%; margin-top: 1em">&bull;
+IgnorePkg</p>
+
+<h2>EXIT CODES
+<a name="EXIT CODES"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">There are
+several possible exit status codes, useful for scripting or
+debugging listed below.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Note:
+apacman&lt;=3.0 only uses 0 for success, 1 for fail.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>0</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Success</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>1</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Miscellaneous errors</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>2</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Invalid parameters</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>3</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Fatal errors, not warnings</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>4</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>No package matches found</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>5</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Package does not exist</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>6</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>No internet connection</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>7</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>&minus;&minus;&minus;</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>8</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>One or more package(s) failed to build, keep going</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>9</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>One package failed to build, do not continue</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>10</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Permission problem &minus;&minus; fakeroot</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>11</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Permission problem &minus;&minus; root user</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>12</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Permission problem &minus;&minus; sudo</p></td>
+<td width="2%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p>13</p></td>
+<td width="8%"></td>
+<td width="76%">
+
+
+<p>Permission problem &minus;&minus; su</p></td>
+<td width="2%">
+</td></tr>
+</table>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>apacman.conf</b>(5)</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>pacman</b>(8)</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>pkgfile</b>(1)</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>packer</b>(8)</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">OS Hazard
+&lt;oshazard+apacman@gmail.com&gt;</p>
+
+<p style="margin-left:11%; margin-top: 1em">Matthew Bruenig
+&lt;matthewbruenig@gmail.com&gt;</p>
+<hr>
+</body>
+</html>
