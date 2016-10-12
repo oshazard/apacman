@@ -1,7 +1,7 @@
 #!/bin/bash
 ######################################################################
 # apacman - AUR wrapper forked from packer
-version="3.0"
+version="3.1"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
@@ -113,12 +113,17 @@ _WIDTH="$(stty size | cut -d ' ' -f 2)"
 trap ctrlc INT
 ctrlc() {
   echo
-  exit $code
+  exit 1
 }
 
 err() {
   echo -e "$1"
-  [[ "$warn" == 1 ]] || exit 1
+  [[ "$warn" == 1 ]] || exit 3
+}
+
+dne() {
+  echo -e "$1"
+  [[ "$warn" == 1 ]] || exit 5
 }
 
 invalid() {
@@ -230,14 +235,14 @@ infoconf() {
 # Called whenever anything needs to be run as root ($@ is the command)
 runasroot() {
   if [[ $testing == 1 ]]; then
-    fakeroot "$@" || code='1'
+    fakeroot "$@" || code='10'
   elif [[ $UID -eq 0 ]]; then
-    "$@" || code='1'
+    "$@" || code='11'
   elif sudo -v &>/dev/null && sudo -l "$@" &>/dev/null; then
-    sudo -E "$@" || code='1'
+    sudo -E "$@" || code='12'
   else
     echo -n "root "
-    su -c "$(printf '%q ' "$@")" || code='1'
+    su -c "$(printf '%q ' "$@")" || code='13'
   fi
 }
 
@@ -339,6 +344,7 @@ getlistpackages() {
   $pacmanbin -Qi${pacmanarg} | grep -e "^Name " -e "^Installed Size " | \
   awk '{if ($(NF-1) ~ /^[0-9]/) printf $(NF-1); print $NF}' | paste -s -d' \n' | \
   sed -e 's/iB$//' -e 's/\.00K/K/' -e 's/\.00B/B/' | awk '{printf "%-10s %-40s\n",$2,$1}' | sort -h
+  exit
 }
 
 # Tests whether package exists on the aur ($1 is name, $2 is dereferenced variable)
@@ -472,7 +478,7 @@ finddeps() {
       elif providedinpacman "$dep"; then
         pacmandeps+=("$providepkg")
       else
-        [[ $option = "install" ]] &&  err "Dependency \`$dep' of \`$1' does not exist."
+        [[ $option = "install" ]] && dne "Dependency \`$dep' of \`$1' does not exist."
         echo "Dependency \`$dep' of \`$1' does not exist."
         return 1
       fi
@@ -639,12 +645,16 @@ aurgendb() {
   runasroot tar -xzf ${database}/raw/aur.files.tar.gz -C ${database}/local/
   runasroot ln -s ${database}/raw/aur.db.tar.gz $pacmandb 2>/dev/null
   aurpkgfile
+  echo -e "${COLOR5}::${COLOR1} Updated AUR database${ENDCOLOR}"
 }
 
 # Update AUR pkgfile database
 aurpkgfile() {
-  pkgdir=$(mktemp -d)
+  if ! deptest pkgfile; then
+    return
+  fi
 
+  pkgdir=$(mktemp -d)
   if [[ -d ${database}/local ]]; then
     cd ${database}/local
     aurlist=$(ls)
@@ -657,8 +667,11 @@ aurpkgfile() {
   runasroot tar -czf ${database}/raw/pkgfile.tar.gz *
   cd - >/dev/null
   rm -r "$pkgdir"
-  runasroot ln -s ${database}/raw/pkgfile.tar.gz "$pkgfiledb" 2>/dev/null
-  echo -e "${COLOR5}::${COLOR1} Updated AUR database${ENDCOLOR}"
+
+  pkgfiledir=$(dirname "$pkgfiledb" 2>/dev/null)
+  if [[ -d "$pkgfiledir" ]]; then
+    runasroot ln -s ${database}/raw/pkgfile.tar.gz "$pkgfiledb" 2>/dev/null
+  fi
 }
 
 # Update local AUR database ($1 is package, $2 is filename)
@@ -707,7 +720,7 @@ buildstatus() {
   if [[ $1 != 0 ]]; then
     echo
     echo -e "${COLOR7}==> ERROR:${ENDCOLOR} ${COLOR1}the build failed${ENDCOLOR}"
-    code='1'
+    code='8'
   fi
 
   echo -e "${COLOR5}  ->${ENDCOLOR} ${COLOR1}Status${ENDCOLOR}"
@@ -716,7 +729,7 @@ buildstatus() {
   [[ $remains ]] && echo -e "\t${COLOR6}remain (${#remains[@]}):${ENDCOLOR} ${remains[@]}"
   echo ""
 
-  [[ $nofail = 1 && $1 != 0 ]] && exit 1
+  [[ $nofail = 1 && $1 != 0 ]] && exit 9
 }
 
 # Build install ($1 is package, $2 is dependency or explicit, $3 is filename)
@@ -844,7 +857,8 @@ offlineinstall() {
   if [ -f "$pkgfile" ]; then
     cacheinstall "$1" "$2" "$pkgfile"
   else
-    err "Package \`$1' does not exist in cache."
+    echo "Package \`$1' does not exist in cache."
+    exit 6
   fi
 }
 
@@ -1004,6 +1018,7 @@ pkgfilehandling() {
 
   shift
   pkgfile -C <(cat $pacmanconf | sed "$ a [$localrepo]") $Parg "$@"
+  exit $?
 }
 
 # Install local packages (-U)
@@ -1051,7 +1066,7 @@ installhandling() {
         pacmandepends+=("${pacmandeps[@]}")
       fi
     else
-      err "Package \`$package' does not exist."
+      dne "Package \`$package' does not exist."
     fi
   done
 
@@ -1098,7 +1113,7 @@ installhandling() {
   fi
   if [[ -z $aurtargets ]]; then
     listbundle
-    exit $code
+    exit
   fi
 
   # Test if aurpackages are already installed; echo warning if so
@@ -1265,6 +1280,8 @@ loadconfig() {
 pacwrap() {
   if [[ $1 = -Q* ]]; then
     $pacmanbin "$@";
+  elif [[ $1 = -T* ]]; then
+    $pacmanbin "$@";
   elif [[ $1 = -U* ]]; then
     localhandling "$@"
   elif [[ $1 = -P* ]]; then
@@ -1274,7 +1291,7 @@ pacwrap() {
   else
     runasroot $pacmanbin "$@";
   fi;
-  exit 0;
+  exit $?
 }
 
 # Override defaults
@@ -1304,7 +1321,7 @@ while [[ $1 ]]; do
     '--devel') devel='1' ;;
     '--edit') unset noedit ;;
     '--force') force='1' PACOPTS+=("--force");;
-    '--gendb') option=gendb ; escaperope='1' ;;
+    '--gendb') gendb='1' ; escaperope='1' ;;
     '--ignore') ignorearg="$2" ; PACOPTS+=("--ignore" "$2") ; shift ;;
     --ignore=*) ignorearg="$1" ; equals+=("--ignore") ;;
     '--ignorearch') MAKEPKGOPTS+=("--ignorearch");;
@@ -1374,7 +1391,7 @@ makearch=$(grep ^CARCH= "$makepkgconf" 2>/dev/null | grep -o -e =.*[0-9A-Za-z] |
 # Check for new packages
 if [[ $quickcheck == 1 ]]; then
   run_quick_check
-  exit $code
+  exit
 fi
 
 # Sanity checks
@@ -1385,15 +1402,13 @@ fi
 [[ $auronly && $noaur ]] && err "Parameters --auronly and --noaur conflict."
 
 # Generate DB (--gendb) handling
-if [[ $option = gendb ]]; then
+if [[ $gendb = 1 ]]; then
   aurgendb
-  exit $code
 fi
 
 # List (-L) handling
 if [[ $option = list ]]; then
   getlistpackages
-  exit $code
 fi
 
 # Install (-S) handling
@@ -1410,7 +1425,7 @@ if [[ $option = install ]]; then
     fi
   done
   installhandling "${packageargs[@]}"
-  exit $code
+  exit $?
 fi
 
 # Update (-Su) handling
@@ -1524,11 +1539,11 @@ if [[ $option = download ]]; then
     elif ! [[ $auronly ]] && existsinpacman "$package"; then
       abslist+=("$package")
     elif [[ $noaur ]]; then
-      err "Package \`$package' does not exist in ABS."
+      dne "Package \`$package' does not exist in ABS."
     elif [[ $auronly ]]; then
-      err "Package \`$package' does not exist in AUR."
+      dne "Package \`$package' does not exist in AUR."
     else
-      err "Package \`$package' does not exist in ABS+AUR."
+      dne "Package \`$package' does not exist in ABS+AUR."
     fi
   done
 
@@ -1628,6 +1643,12 @@ if [[ $option = search || $option = searchinstall ]]; then
     alltotal="$pactotal"
   fi
 
+  # Exit if there are no matches
+  if [[ $alltotal = 0 ]]; then
+    echo -e "${COLOR5}==>${COLOR7} no matches${ENDCOLOR}"
+    exit 4
+  fi
+
   # Echo out the -Ss formatted package information
   IFS=$'\t\n'
   if [[ $option = search ]]; then
@@ -1655,9 +1676,6 @@ if [[ $option = search || $option = searchinstall ]]; then
     pkglist=()
     allpackages=( "${pacname[@]}" "${aurname[@]}" )
 
-    # Exit if there are no matches
-    [[ $allpackages ]] || exit 1
-
     # Prompt for numbers
     echo
     echo -e "${COLOR2}Type numbers to install. Separate each number with a space.${ENDCOLOR}"
@@ -1683,7 +1701,7 @@ if [[ $option = search || $option = searchinstall ]]; then
   rm -f "$tmpdir/*search" &>/dev/null
   rm -f "$tmpdir/search.result" &>/dev/null
   rm -f "$tmpdir/packages.lst" &>/dev/null
-  exit $code
+  exit
 fi
 
 # Info (-Si) handling
@@ -1699,7 +1717,7 @@ if [[ $option = info ]]; then
       results="$(sed -r "s|^(URL[^:]*:)(.*)$|\1$S${COLOR4}\2$S${ENDCOLOR}|" <<< "$results")"
       results="$(sed -r "s|^[^ ][^:]*:|$S${COLOR1}&$S${ENDCOLOR}|" <<< "$results")"
       echo -e "$results"
-      exit $code
+      exit
     elif ! [[ $noaur ]]; then # Check to see if it is in the aur
       pkginfo "$package" "$preview"
       [[ -s "$tmpdir/$package.PKGBUILD" ]] || err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"

@@ -382,6 +382,40 @@ These settings are used from /etc/pacman\&.conf:
 .\}
 IgnorePkg
 .RE
+.SH EXIT CODES
+.sp
+There are several possible exit status codes, useful for scripting or debugging listed below.
+.sp
+Note: apacman<=3.0 only uses 0 for success, 1 for fail.
+.IP 0
+Success
+.IP 1
+Miscellaneous errors
+.IP 2
+Invalid parameters
+.IP 3
+Fatal errors, not warnings
+.IP 4
+No package matches found
+.IP 5
+Package does not exist
+.IP 6
+No internet connection
+.IP 7
+\-\-\-
+.IP 8
+One or more package(s) failed to build, keep going
+.IP 9
+One package failed to build, do not continue
+.IP 10
+Permission problem \-\- fakeroot
+.IP 11
+Permission problem \-\- root user
+.IP 12
+Permission problem \-\- sudo
+.IP 13
+Permission problem \-\- su
+.RE
 .SH "SEE ALSO"
 .sp
 \fBapacman.conf\fR(5)
