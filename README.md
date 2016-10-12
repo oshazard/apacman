@@ -1,7 +1,13 @@
 apacman
 ==================
 
-ArchLinux User Repository (AUR) helper and pacman wrapper [![gitter](https://img.shields.io/gitter/room/apacman/gitter.svg?maxAge=2592000)](https://gitter.im/apacman/Lobby)
+ArchLinux User Repository ([AUR](https://aur.archlinux.org/packages/)) helper and pacman wrapper
+
+**Chat room:** [![gitter](https://img.shields.io/gitter/room/apacman/gitter.svg?maxAge=2592000)](https://gitter.im/apacman/Lobby)
+
+**Comments:** [![AUR package](https://img.shields.io/aur/version/apacman.svg?label=AUR%20package&maxAge=2592000&style=plastic)](https://aur.archlinux.org/packages/apacman/)
+
+------------
 
 **Total:**   [![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)](https://github.com/oshazard/apacman/releases)
 
@@ -10,23 +16,29 @@ ArchLinux User Repository (AUR) helper and pacman wrapper [![gitter](https://img
 **Current:**  [![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)](https://github.com/oshazard/apacman/releases/latest)
 
 **Votes:**    [![Votes](https://img.shields.io/aur/votes/apacman.svg)](https://aur.archlinux.org/packages/apacman/) [![Stars](https://img.shields.io/github/stars/oshazard/apacman.svg?style=social)](https://github.com/oshazard/apacman/stargazers)
-(if you like this software, please upvote it on AUR)
+<sup>(if you like this software, please upvote it on AUR)</sup>
 
 
-[![AUR package](https://img.shields.io/aur/version/apacman.svg?label=AUR%20package&maxAge=2592000&style=plastic)](https://aur.archlinux.org/packages/apacman/)
+See also
+------------
 
-[Migrate wizard for AUR4](https://gist.github.com/oshazard/370c7ed631af2181ee51)
+[![apacman-utils](https://img.shields.io/aur/version/apacman-utils.svg?label=apacman-utils)](https://aur.archlinux.org/packages/apacman-utils/) [<sup>(AUR uploader)</sup>](https://github.com/oshazard/apacman-utils/blob/master/aurpush) [<sup>(Migrate wizard for AUR4)</sup>](https://github.com/oshazard/apacman-utils/blob/master/apac-migrate)
 
 [Forked](https://github.com/keenerd/packer/pull/141) from [packer](https://github.com/keenerd/packer)
 
 
 Installation:
 ==========
-`pacman -S --needed --asdeps jshon`
+1. `pacman -S --needed --asdeps jshon`
+2. `curl -O "https://raw.githubusercontent.com/oshazard/apacman/master/apacman"`
+3. `bash ./apacman -S apacman`
+4. `apacman -S apacman-deps` (_optional_)
 
-`curl -O "https://raw.githubusercontent.com/oshazard/apacman/master/apacman"`
 
-`bash ./apacman -S apacman`
+Documentation:
+==========
+* [`man 8 apacman`](https://oshazard.github.io/apacman/apacman.8.html)
+* [`man 5 apacman.conf`](https://oshazard.github.io/apacman/apacman.conf.5.html)
 
 
 Changelog:
@@ -46,16 +58,16 @@ Version 3.0
 
 Version 2.9
 -----------
-* **NEW** -P parameter uses AUR passthrough for pkgfile
-* **NEW** Save installed AUR package metadata to database
-* **NEW** --nodatabase parameter does not store AUR database
-* **NEW** --gendb parameter to generate AUR database files
-* **NEW** Display remaining packages in queue
-* **NEW** --notify parameter for notify-send notifications
-* **NEW** --noprogress to disable transaction progress
-* **NEW** Enabled terminal title progress by default
-* **NEW** --edit parameter to override 'noedit' option in config file
-* **NEW** fix CLI flag precedence over config file
+* -P parameter uses AUR passthrough for pkgfile
+* Save installed AUR package metadata to database
+* --nodatabase parameter does not store AUR database
+* --gendb parameter to generate AUR database files
+* Display remaining packages in queue
+* --notify parameter for notify-send notifications
+* --noprogress to disable transaction progress
+* Enabled terminal title progress by default
+* --edit parameter to override 'noedit' option in config file
+* fix CLI flag precedence over config file
 
 Version 2.6
 -----------
