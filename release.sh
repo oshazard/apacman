@@ -14,12 +14,16 @@ err() {
 manual2html() {
   mkdir -p docs/
   for manual in $manpages; do
-    echo "==> Generating docs/${manual}.html"
+    output="docs/${manual}.html"
+    [ -f "$output" ] && hash=$(md5sum "$output");
     cat "$manual" | groff -mandoc -Thtml | grep -v "^<\!--" > "docs/${manual}.html"
+    echo "$hash" | md5sum -c &>/dev/null ||
+    echo "==> Generating docs/${manual}.html"
   done
 }
 
 compare2rel() {
+  lastrel=$(git tag 2>/dev/null | tail -n 1)
   if [[ "$lastrel" ]]; then
     tagged=$(git log -1 --pretty=oneline $lastrel | awk '{print $1}')
     head=$(git log -1 --pretty=oneline HEAD | awk '{print $1}')
@@ -38,21 +42,22 @@ testunits() {
 
 createarchive() {
   newrel="${lastrel#v}"
-  mkdir -p "$tmpdir/${pkgname}-${newrel}" &&
-  cp * "$tmpdir/${pkgname}-${newrel}/" &&
-  cd "$tmpdir" &&
-  tar -czvf "${pkgname}-${newrel}.tar.gz" "${pkgname}-${newrel}/" &&
-  echo "==> ${pkgname}-${newrel}.tar.gz" &&
-  exit 0
+  if [ ! -z "$newrel" ]; then
+    mkdir -p "$tmpdir/${pkgname}-${newrel}" &&
+    find . -maxdepth 1 -type f -exec cp {} "$tmpdir/${pkgname}-${newrel}/" \; &&
+    cd "$tmpdir" &&
+    tar -czvf "${pkgname}-${newrel}.tar.gz" "${pkgname}-${newrel}/" &&
+    echo "==> ${pkgname}-${newrel}.tar.gz" &&
+    return 0
+  fi
+  return 1
 }
 
 manual2html
 staging=$(git status -s --untracked-files=no 2>/dev/null)
-ready=$(echo "$staging" | wc -l)
-lastrel=$(git tag 2>/dev/null | tail -n 1)
-
+ready=$(echo "$staging" | grep -v ^$ | wc -l)
 [ "$ready" -eq 0 ] || err "$staging"
-compare2rel || err ":: HEAD not tagged"
 testunits || err ":: Unit tests failed"
+compare2rel || err ":: HEAD not tagged"
 createarchive || err ":: Unable to create archive"
 echo "==> Release ready"

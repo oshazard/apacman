@@ -864,6 +864,41 @@ offlineinstall() {
   fi
 }
 
+# Sanity check for umask permissions ($1 is build directory)
+checkumask() {
+  otherbits=$(ls -ld "$1" | awk '{print $1}' | cut -c 8,10)
+  if [[ $otherbits != "rx" ]]; then
+    mask=$(umask 2>/dev/null)
+    if [[ $mask != *022 ]]; then
+      echo -e "${COLOR6}warning:${ENDCOLOR} umask set to ${COLOR4}${mask}${ENDCOLOR} (should be 022)"
+    fi
+    rmdir "$1"
+    err "${COLOR7}error:${COLOR1} no write permission in ${1}${ENDCOLOR}"
+  fi
+}
+
+# Sanity check for tmpfs free disk space ($1 is build directory)
+checkcapacity() {
+  capacity=$(df -P "$1" 2>/dev/null | tail -n 1 | awk '{print $5}' | tr -dc '[0-9]\n')
+  if [[ $capacity -ge 99 ]]; then
+    echo -e "${COLOR7}error:${COLOR1} no free space in ${1}${ENDCOLOR}"
+    [[ "$warn" == 1 ]] || exit 7
+  elif [[ $capacity -gt 90 ]]; then
+    echo -e "${COLOR6}warning:${ENDCOLOR} low disk space in ${1} (tmpfs)"
+  fi
+}
+
+# Clean package source ($1 is package)
+cleanbuild() {
+  whatlinkshere=$(ls -l --color=never "$builddir" | grep ^l | grep "/${1}$" | awk '{print $(NF-2)}')
+  if [[ $whatlinkshere ]]; then
+    echo -e "${COLOR3}notice:${ENDCOLOR} cleaning delayed until finished with $whatlinkshere"
+  else
+    echo -e "${COLOR5}::${COLOR1} Cleaning build ${builddir}/$1 ${ENDCOLOR}"
+    rm -rf "${builddir}/$1"
+  fi
+}
+
 # Installs packages from aur ($1 is package, $2 is dependency or explicit)
 aurinstall() {
   if [[ $offline = '1' ]]; then
@@ -882,22 +917,14 @@ aurmakepkg() {
   # Prepare the installation directory
   # If there is an old directory and aurversion is not newer, use old directory
   if parser "$dir/PKGBUILD" &>/dev/null && ! aurversionisnewer "$1" "$pkgver-$pkgrel"; then
+    checkumask "$dir"
+    checkcapacity "$dir"
     cd "$dir"
   else
     [[ -d "$dir" ]] && rm -rf "$dir"
     mkdir -p "$builddir"
-
-    # Check umask permissions
-    otherbits=$(ls -ld "$builddir" | awk '{print $1}' | cut -c 8,10)
-    if [[ $otherbits != "rx" ]]; then
-      mask=$(umask 2>/dev/null)
-      if [[ $mask != *022 ]]; then
-        echo -e "${COLOR6}warning:${ENDCOLOR} umask set to ${COLOR4}${mask}${ENDCOLOR} (should be 022)"
-      fi
-      rmdir "$builddir"
-      err "${COLOR7}error:${COLOR1} no write permission in ${builddir}${ENDCOLOR}"
-    fi
-
+    checkumask "$builddir"
+    checkcapacity "$builddir"
     cd "$builddir"
     curl -Lfs "$(pkglink $1)" > "$1.tar.gz"
     cstatus=$?; curlyq "$cstatus" "$1"
@@ -1000,6 +1027,9 @@ aurmakepkg() {
     cp ${pkgtar} $savedir/ 2>/dev/null || runasroot cp ${pkgtar} $savedir/
     echo -e "${COLOR5}  -> ${COLOR1}Installing ${1}${ENDCOLOR}"
     buildinstall $1 $2 ${savedir}/$pkgtar
+    cleanbuild $1
+  elif [[ $nofail ]]; then
+    cleanbuild $1
   fi
 }
 
