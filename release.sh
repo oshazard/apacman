@@ -5,11 +5,17 @@ tester="bats"
 unit="test.bats"
 tmpdir="${TMPDIR:-/tmp}"
 
+err() {
+  echo "$@"
+  echo "==> Release not ready"
+  exit 1
+}
+
 manual2html() {
   mkdir -p docs/
   for manual in $manpages; do
     echo "==> Generating docs/${manual}.html"
-    cat "$manual" | groff -mandoc -Thtml > "docs/${manual}.html"
+    cat "$manual" | groff -mandoc -Thtml | grep -v "^<\!--" > "docs/${manual}.html"
   done
 }
 
@@ -44,14 +50,9 @@ manual2html
 staging=$(git status -s --untracked-files=no 2>/dev/null)
 ready=$(echo "$staging" | wc -l)
 lastrel=$(git tag 2>/dev/null | tail -n 1)
-if [ "$ready" -eq 0 ]; then
-  compare2rel &&
-  testunits &&
-  createarchive &&
-  echo "==> Release ready"
-else
-  echo "$staging"
-fi
 
-echo "==> Release not ready"
-exit 1
+[ "$ready" -eq 0 ] || err "$staging"
+compare2rel || err ":: HEAD not tagged"
+testunits || err ":: Unit tests failed"
+createarchive || err ":: Unable to create archive"
+echo "==> Release ready"
