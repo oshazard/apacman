@@ -128,6 +128,7 @@ dne() {
 
 invalid() {
   echo -e "${COLOR7}error:${ENDCOLOR} invalid option \`$1'"
+  [[ $nofail ]] && exit 2
 }
 
 progress() {
@@ -344,7 +345,7 @@ getlistpackages() {
   $pacmanbin -Qi${pacmanarg} | grep -e "^Name " -e "^Installed Size " | \
   awk '{if ($(NF-1) ~ /^[0-9]/) printf $(NF-1); print $NF}' | paste -s -d' \n' | \
   sed -e 's/iB$//' -e 's/\.00K/K/' -e 's/\.00B/B/' | awk '{printf "%-10s %-40s\n",$2,$1}' | sort -h
-  exit
+  exit $?
 }
 
 # Tests whether package exists on the aur ($1 is name, $2 is dereferenced variable)
@@ -646,6 +647,7 @@ aurgendb() {
   runasroot ln -s ${database}/raw/aur.db.tar.gz $pacmandb 2>/dev/null
   aurpkgfile
   echo -e "${COLOR5}::${COLOR1} Updated AUR database${ENDCOLOR}"
+  [[ -z $option && -z $packageargs ]] && exit
 }
 
 # Update AUR pkgfile database
@@ -1215,6 +1217,7 @@ installhandling() {
   fi
 
   listbundle
+  exit $code
 }
 
 run_quick_check() {
@@ -1276,6 +1279,15 @@ loadconfig() {
   done
 }
 
+# Unit testing env
+enabletesting() {
+  savedir="$testdir"
+  PACOPTS+=("-r" "$testdir")
+  PACOPTS+=("--cachedir" "${testdir}/var/cache/pacman/pkg")
+  PACOPTS+=("--dbpath" "${testdir}/var/lib/pacman")
+}
+
+
 # Wrap pacman parameters
 pacwrap() {
   if [[ $1 = -Q* ]]; then
@@ -1321,7 +1333,7 @@ while [[ $1 ]]; do
     '--devel') devel='1' ;;
     '--edit') unset noedit ;;
     '--force') force='1' PACOPTS+=("--force");;
-    '--gendb') gendb='1' ; escaperope='1' ;;
+    '--gendb') gendb='1' ;;
     '--ignore') ignorearg="$2" ; PACOPTS+=("--ignore" "$2") ; shift ;;
     --ignore=*) ignorearg="$1" ; equals+=("--ignore") ;;
     '--ignorearch') MAKEPKGOPTS+=("--ignorearch");;
@@ -1349,7 +1361,7 @@ while [[ $1 ]]; do
     '--skipcache') skipcache='1' ;;
     '--skipinteg') skipinteg='1' ; MAKEPKGOPTS+=("--skipinteg");;
     '--skiptest') skiptest='1' ; MAKEPKGOPTS+=("--nocheck");;
-    '--testing') testing='1' ; savedir="$testdir" ;;
+    '--testing') testing='1' ; enabletesting ;;
     '--warn') warn='1' ;;
     '-h'|'--help') usage ;;
     '-v'|'--verbose') verbose='1' ;;
@@ -1394,22 +1406,24 @@ if [[ $quickcheck == 1 ]]; then
   exit
 fi
 
-# Sanity checks
+# Verbose mode
 [[ $verbose || $debug ]] && infoconf
-[[ $config && -z $apacmanconf ]] && err "${COLOR7}error:${ENDCOLOR} no config file specified (use -h for help)"
-[[ $option ]] || option="searchinstall"
-[[ $escaperope != 1 && -z $packageargs ]] && err "${COLOR7}error:${ENDCOLOR} must specify a package."
-[[ $auronly && $noaur ]] && err "Parameters --auronly and --noaur conflict."
+
+# List (-L) handling
+if [[ $option = list ]]; then
+  getlistpackages
+fi
 
 # Generate DB (--gendb) handling
 if [[ $gendb = 1 ]]; then
   aurgendb
 fi
 
-# List (-L) handling
-if [[ $option = list ]]; then
-  getlistpackages
-fi
+# Sanity checks
+[[ $config && -z $apacmanconf ]] && err "${COLOR7}error:${ENDCOLOR} no config file specified (use -h for help)"
+[[ $option ]] || option="searchinstall"
+[[ $escaperope != 1 && -z $packageargs ]] && err "${COLOR7}error:${ENDCOLOR} must specify a package."
+[[ $auronly && $noaur ]] && err "Parameters --auronly and --noaur conflict."
 
 # Install (-S) handling
 if [[ $option = install ]]; then

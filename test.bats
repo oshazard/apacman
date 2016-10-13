@@ -6,6 +6,7 @@ fakedir="${TMPDIR:-/tmp}/testing"
 testing="--testing"
 noconfirm="--noconfirm"
 buildonly="--buildonly"
+nofail="--nofail"
 skipcache="--skipcache"
 goodpkg="apacman"
 badpkg="afuse"
@@ -27,8 +28,8 @@ virtualpkg="ttf-font"
 }
 
 @test "invoke with nonexistent parameter returns 1" {
-  run $APACMAN --falseflag
-  [ "$status" -eq 1 ]
+  run $APACMAN $nofail --falseflag
+  [ "$status" -eq 2 ]
 }
 
 @test "invoking with '--help' parameter prints usage" {
@@ -44,7 +45,7 @@ virtualpkg="ttf-font"
 
 @test "invoke with '--verbose' parameter without package argument" {
   run $APACMAN -v
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 3 ]
   [ "${lines[-1]}" = "error: must specify a package." ]
 }
 
@@ -60,7 +61,7 @@ virtualpkg="ttf-font"
 
 @test "interactive search install nonexistant package" {
   run $APACMAN $testing $noconfirm $buildonly $skipcache $fakepkg <<< $(echo -e "0\n")
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 4 ]
 }
 
 @test "invoke with '-S' parameter installs package from AUR" {
@@ -70,7 +71,7 @@ virtualpkg="ttf-font"
 
 @test "invoke with '-S' parameter fails to build broken package from AUR" {
   run $APACMAN $testing $noconfirm $buildonly $skipcache -S $badpkg
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 8 ]
 }
 
 @test "invoke with '-S' parameter installs cached AUR package" {
@@ -85,7 +86,7 @@ virtualpkg="ttf-font"
 
 @test "invoke with '-S' parameter fails to install nonexistant package" {
   run $APACMAN $testing $noconfirm $buildonly $skipcache -S $fakepkg
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 5 ]
 }
 
 @test "prepare proot environment" {
@@ -109,7 +110,7 @@ virtualpkg="ttf-font"
   result=$(proot -b "${fakedir}/var:/var" $APACMAN $testing -S $virtualpkg --noconfirm --buildonly <<< $(echo -e "\n") 2>&1)
   status=$?
   [ "$status" -eq 0 ]
-  pattern="There are 10 packages that provide $virtualpkg"
+  pattern="There are 9 packages that provide $virtualpkg"
   match=$(echo "$result" | grep -o "$pattern")
   [ "$match" = "$pattern" ]
 }
