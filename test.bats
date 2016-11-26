@@ -14,7 +14,7 @@ fakepkg="xxxxxx"
 corepkg="filesystem"
 grouppkg="ladspa-plugins"
 virtualpkg="ttf-font"
-
+histpkg="jbxkb"
 
 @test "test command is found" {
   run $APACMAN
@@ -89,6 +89,31 @@ virtualpkg="ttf-font"
   [ "$status" -eq 5 ]
 }
 
+@test "invoke with '-G' parameter download AUR package source" {
+  run proot -w ${fakedir} -b ${fakedir}:$HOME $(readlink -e $APACMAN) $testing -G ${histpkg}
+  status=$?
+  [ "$status" -eq 0 ]
+  pattern="$histpkg/PKGBUILD"
+  [ ${lines[-1]} = "$pattern" ]
+}
+
+@test "invoke with '-G' parameter download old AUR package source" {
+  run proot -w ${fakedir} -b ${fakedir}:$HOME $(readlink -e $APACMAN) $testing -G ${histpkg}==0.7-1
+  status=$?
+  [ "$status" -eq 0 ]
+  pattern="0.7-1"
+  match=$(grep -o -e pkgver.* -e pkgrel.* ${fakedir}/${histpkg}/.SRCINFO | awk '{printf $NF"-"}' | sed 's/-$//' | grep -o "$pattern")
+  [ "$match" = "$pattern" ]
+}
+
+@test "invoke with '-G' parameter choose download old AUR package source" {
+  run proot -w ${fakedir} -b ${fakedir}:$HOME $(readlink -e $APACMAN) $testing -G ${histpkg}~ <<< $(echo -e "2\n") 2>&1
+  status=$?
+  [ "$status" -eq 0 ]
+  pattern=":: There are 2 releases for $histpkg:"
+  [ ${lines[2]} = "$pattern" ]
+}
+
 @test "prepare proot environment" {
   rm -rf "$fakedir"
   run mkdir -p ${fakedir}/var/lib/pacman
@@ -98,6 +123,7 @@ virtualpkg="ttf-font"
 }
 
 @test "invoke with '-S' parameter install package group" {
+  skip
   result=$(proot -b "${fakedir}/var:/var" $APACMAN $testing -S $grouppkg --noconfirm --buildonly <<< $(echo -e "\n") 2>&1)
   status=$?
   [ "$status" -eq 0 ]
