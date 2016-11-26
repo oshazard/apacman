@@ -5,6 +5,8 @@ version="3.1"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Clean build files
+# * Clean temp files
 # * --savedir <dir>, --savedir=<dir>
 # * Install AUR packages offline
 # * --testing    for unit testing purposes only
@@ -557,7 +559,8 @@ rpcinfo() {
 
 pkglink() {
   rpcinfo $1
-  echo "${PKGURL}$(jshon -Q -e results -a -e URLPath -u < "$tmpdir/$1.info")"
+  aurpkgpath=$(jshon -Q -e results -a -e URLPath -u < "$tmpdir/$1.info")
+  [[ $aurpkgpath ]] && echo "${PKGURL}${aurpkgpath}"
 }
 
 absrepo() {
@@ -599,6 +602,8 @@ pkginfo() {
   if ! [[ -f "$tmpdir/$1.PKGBUILD" ]]; then
     pkgpath=$(pkglink $1)
     basepath=$(echo ${pkgpath##*/} | sed 's/\.tar\.gz$//')
+    [[ $basepath ]] || err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
+
     if [[ $legacy == 1 ]]; then
       curl -Lfs "${pkgpath%/*}/PKGBUILD" > "$tmpdir/$1.PKGBUILD"
       cstatus=$?; curlyq "$cstatus" "$1"
@@ -894,8 +899,10 @@ cleanbuild() {
   if [[ $whatlinkshere ]]; then
     echo -e "${COLOR3}notice:${ENDCOLOR} cleaning delayed until finished with $whatlinkshere"
   else
+    [[ $verbose ]] &&
     echo -e "${COLOR5}::${COLOR1} Cleaning build ${builddir}/$1 ${ENDCOLOR}"
     rm -rf "${builddir}/$1"
+    rm "${tmpdir}/$1.info" "${tmpdir}/$1.PKGBUILD"
   fi
 }
 
@@ -1425,6 +1432,7 @@ done
 # Set tmpfile stuff, clean tmpdir
 rm -rf "$tmpdir" &>/dev/null
 mkdir -p "$tmpdir"
+olddir="$PWD"
 cd
 
 # Determine architecture
@@ -1577,6 +1585,8 @@ fi
 
 # Download (-G) handling
 if [[ $option = download ]]; then
+  cd "$olddir"
+
   for package in "${packageargs[@]}"; do
     if ! [[ $noaur ]] && existsinaur "$package" "package"; then
       pkglist+=("$package")
@@ -1612,11 +1622,13 @@ if [[ $option = download ]]; then
     [ -d "$package" ] && rm -r "$package"
     if [ -f "$package.tar.gz" ]; then
       mkdir "$package"
-      tar -xvf "$package.tar.gz" -C "$package" --strip-components=1
+      tar -xzvf "$package.tar.gz" -C "$package" --strip-components=1
     else
       err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$package'"
     fi
   done
+
+  exit
 fi
 
 # Search (-Ss) handling
@@ -1766,6 +1778,9 @@ if [[ $option = info ]]; then
       pkginfo "$package" "$preview"
       [[ -s "$tmpdir/$package.PKGBUILD" ]] || err "${COLOR7}error:${ENDCOLOR} package '$package' was not found"
       parser "$tmpdir/$package.PKGBUILD"
+
+      # Clean temp files
+      [[ $debug ]] || rm "$tmpdir/$package.PKGBUILD" "$tmpdir/$package.info"
 
       # Echo out the -Si formatted package information
       # Retrieve each element in order and echo them immediately
