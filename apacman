@@ -5,6 +5,8 @@ version="3.1"
 # Copyright OS Hazard <oshazard+aur@gmail.com>
 #
 # New Features:
+# * Build old AUR releases from source (pkgname~, pkgname==ver)
+# * Merge fix for aurbar length
 # * Clean build files
 # * Clean temp files
 # * --savedir <dir>, --savedir=<dir>
@@ -352,7 +354,7 @@ getlistpackages() {
 
 # Tests whether package exists on the aur ($1 is name, $2 is dereferenced variable)
 existsinaur() {
-  chosenpkg=$1
+  chosenpkg=$(echo "$1" | sed 's/\~$//' | awk -F "==" '{print $1}')
   val="${!2}"
 
   regexmatch="$(echo $val | tr -dc '0-9a-z-.\n')"
@@ -409,7 +411,7 @@ pickone() {
       num=$((num-1))
       chosenone="${choices[$num]}"
     else
-      err "Number \`$num' is not assigned to any of the $numtype."
+      err "Number \`$num' is not assigned to any of the options."
     fi
     done
   else
@@ -435,6 +437,57 @@ selectprovider() {
     [[ $regex = 1 ]] && provmsg="match" && unset regex
     echo -e "${COLOR5}:: ${COLOR1}There are $virtnum packages that $provmsg $virtpkg:${ENDCOLOR}"
     providepkg=$(pickone $virtnum ${virtual[@]})
+  fi
+}
+
+# Source old release ($1 is pkgver, $2 is pkgrel)
+checkrelease() {
+  chistory=$(git rev-list --all)
+  cmatch=$(git grep --all-match -e "pkgver = $1" -e "pkgrel = $2" ${chistory} -- .SRCINFO)
+  chash=$(echo "$cmatch" | awk NR==1 | awk -F : '{print $1}')
+  if [[ ! $chash ]]; then
+    return 1
+  fi
+}
+
+# Parse AUR4 git repo
+relhistory() {
+  chistory=$(git rev-list --all)
+  cpkglog=$(git grep -A 1 -e "pkgver =" ${chistory} -- .SRCINFO)
+  cversions=$(echo "$cpkglog" | awk '{$1=""; print $0}' | sed -e 's/^$/%%%/')
+  cwtf=$(echo "$cversions" | sed -e 's/ pkgver = //' -e 's/ pkgrel = /-/')
+  creleases=$(echo "$cwtf" | tr -d '\n' | sed -e 's/$/\n/' -e 's/%%%/\n/g')
+  echo "$creleases"
+}
+
+# Select AUR package version ($1 is pkgname)
+selectrel() {
+  release=( $(relhistory) )
+  relnum=${#release[@]}
+  echo -e "${COLOR5}:: ${COLOR1}There are $relnum releases for $1:${ENDCOLOR}"
+  pickone $relnum ${release[@]}
+}
+
+# Build old AUR releases ($1 is package name)
+clonehistory() {
+  if deptest git; then
+    git clone --quiet "${PKGURL}/${1}.git"
+    cd "$1"
+
+    if [ -z $2 ]; then
+      selectrel "$1"
+      relver="$chosenone"
+    else
+      relver="$2"
+    fi
+
+    if checkrelease ${relver%-*} ${relver##*-}; then
+      echo -e "${COLOR5}:: ${COLOR1}Checking out $1 ${relver%-*}-${relver##*-}${ENDCOLOR}"
+      git checkout --quiet "$chash"
+      ls | sed "s/^/$1\//"
+    else
+      err "${COLOR7}error:${ENDCOLOR} package '$1' release '$relver' was not found"
+    fi
   fi
 }
 
@@ -1631,7 +1684,24 @@ if [[ $option = download ]]; then
 
   [[ $pkglist ]] && echo -e "${COLOR6}notice:$ENDCOLOR sourcing from ${COLOR3}[AUR]$ENDCOLOR"
   for package in "${pkglist[@]}"; do
-    if [[ $package ]]; then
+    if [[ $package = *~ ]]; then
+      pkgname="${package%\~}"
+      [ -d "$pkgname" ] && rm -rf "${pkgname}/.git"
+      [ -d "$pkgname" ] && rm -r "$pkgname"
+      clonehistory "$pkgname"
+      if [ ! -f "PKGBUILD" ]; then
+        err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$pkgname' release $pkgver"
+      fi
+    elif [[ $package = *==* ]]; then
+      pkgname=$(echo "$package" | awk -F "==" '{print $1}')
+      pkgver=$(echo "$package" | awk -F "==" '{print $2}')
+      [ -d "$pkgname" ] && rm -rf "${pkgname}/.git"
+      [ -d "$pkgname" ] && rm -r "$pkgname"
+      clonehistory "$pkgname" "$pkgver"
+      if [ ! -f "PKGBUILD" ]; then
+        err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$pkgname' release"
+      fi
+    else
       curl -Lfs "$(pkglink $package)" > "$package.tar.gz"
       cstatus=$?; curlyq "$cstatus" "$package"
       [ -d "$package" ] && rm -rf "${package}/.git"
