@@ -387,6 +387,38 @@ providedinpacman() {
   [[ -n $providepkg ]]
 }
 
+# Select option from numeric choice ($1 is num, $@ is array of choices)
+pickone() {
+  n=1
+  maxnum=$1
+  shift
+  choices=( $(echo $@) )
+
+  for v in ${choices[@]}; do
+    echo "${n}) $v";
+    n=$((n+1))
+  done
+  echo
+  echo -n "Enter a selection (default=1): "
+  read -r
+
+  # Parse answer
+  if [[ $REPLY ]]; then
+    for num in $REPLY; do
+    if [[ $num -le $maxnum ]] && [[ $num -ge 1 ]]; then
+      num=$((num-1))
+      chosenone="${choices[$num]}"
+    else
+      err "Number \`$num' is not assigned to any of the $numtype."
+    fi
+    done
+  else
+    chosenone="$choices"
+  fi
+
+  echo "$chosenone"
+}
+
 # Prompts options for virtual packages, $1 is package, $@ is array of packages
 selectprovider() {
   virtpkg=$1
@@ -402,28 +434,7 @@ selectprovider() {
     provmsg="provide"
     [[ $regex = 1 ]] && provmsg="match" && unset regex
     echo -e "${COLOR5}:: ${COLOR1}There are $virtnum packages that $provmsg $virtpkg:${ENDCOLOR}"
-    n=1
-    for v in ${virtual[@]}; do
-      echo "${n}) $v";
-      n=$((n+1))
-    done
-    echo
-    echo -n "Enter a selection (default=1): "
-    read -r
-
-    # Parse answer
-    if [[ $REPLY ]]; then
-      for num in $REPLY; do
-        if [[ $num -le $virtnum ]] && [[ $num -ge 1 ]]; then
-          num=$((num-1))
-          providepkg="${virtual[$num]}"
-        else
-          err "Number \`$num' is not assigned to any of the packages."
-        fi
-      done
-    else
-      providepkg="$virtual"
-    fi
+    providepkg=$(pickone $virtnum ${virtual[@]})
   fi
 }
 
@@ -1617,14 +1628,17 @@ if [[ $option = download ]]; then
 
   [[ $pkglist ]] && echo -e "${COLOR6}notice:$ENDCOLOR sourcing from ${COLOR3}[AUR]$ENDCOLOR"
   for package in "${pkglist[@]}"; do
-    curl -Lfs "$(pkglink $package)" > "$package.tar.gz"
-    cstatus=$?; curlyq "$cstatus" "$package"
-    [ -d "$package" ] && rm -r "$package"
-    if [ -f "$package.tar.gz" ]; then
-      mkdir "$package"
-      tar -xzvf "$package.tar.gz" -C "$package" --strip-components=1
-    else
-      err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$package'"
+    if [[ $package ]]; then
+      curl -Lfs "$(pkglink $package)" > "$package.tar.gz"
+      cstatus=$?; curlyq "$cstatus" "$package"
+      [ -d "$package" ] && rm -rf "${package}/.git"
+      [ -d "$package" ] && rm -r "$package"
+      if [ -f "$package.tar.gz" ]; then
+        mkdir "$package"
+        tar -xzvf "$package.tar.gz" -C "$package" --strip-components=1
+      else
+        err "${COLOR7}error:${ENDCOLOR} failed to retrieve package \`$package'"
+      fi
     fi
   done
 
