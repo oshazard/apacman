@@ -11,7 +11,7 @@ ArchLinux User Repository ([AUR](https://aur.archlinux.org/packages/)) helper an
 
 **Total:**   [![all downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/total.svg)](https://github.com/oshazard/apacman/releases)
 
-**Previous:** [![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.6/total.svg)](https://github.com/oshazard/apacman/releases/tag/v2.6) [![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.9/total.svg)](https://github.com/oshazard/apacman/releases/tag/v2.9)
+**Previous:** [![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v2.6/total.svg)](https://github.com/oshazard/apacman/releases/tag/v2.6) [![previous release badge](https://img.shields.io/github/downloads/oshazard/apacman/v3.0/total.svg)](https://github.com/oshazard/apacman/releases/tag/v3.0)
 
 **Current:**  [![downloads badge](https://img.shields.io/github/downloads/oshazard/apacman/latest/total.svg)](https://github.com/oshazard/apacman/releases/latest)
 
@@ -44,16 +44,26 @@ Documentation:
 Changelog:
 ==========
 
+Version 3.1
+----------
+* **NEW** Clean build directory and temp directory (fixed #75)
+* **NEW** Expanded -G to fetch old AUR package source (`-G foobar~` or `-G foobar==2.0-1`)
+* **NEW** Added new exit codes (fixed #72)
+* **NEW** Converted manpages to HTML
+* **NEW** Fix for progress bar to match `pacman` (pull request #76)
+* **NEW** Fix ZSH completion (pull request #74)
+* **NEW** Miscellaneous fixes and cleanup
+
 Version 3.0
 ----------
-* **NEW** Add alternative --flag=parameter syntax for relevant options
-* **NEW** Fix for installing groups and virtual packages
-* **NEW** Fix to allow installing cached packages without Internet
-* **NEW** Implement unit tests using [bats](https://github.com/sstephenson/bats) (WIP)
-* **NEW** Add regex/wildcard support to -S and -Ss
-* **NEW** Return code 1 on errors
-* **NEW** Improve viewing package comments
-* **NEW** Update manpages
+* Add alternative --flag=parameter syntax for relevant options
+* Fix for installing groups and virtual packages
+* Fix to allow installing cached packages without Internet
+* Implement unit tests using [bats](https://github.com/sstephenson/bats) (WIP)
+* Add regex/wildcard support to -S and -Ss
+* Return code 1 on errors
+* Improve viewing package comments
+* Update manpages
 * Closed 10+ issues since last release
 
 Version 2.9
