@@ -5,7 +5,7 @@ ArchLinux User Repository ([AUR](https://aur.archlinux.org/packages/)) helper an
 
 **Chat room:** [![gitter](https://img.shields.io/gitter/room/apacman/gitter.svg?maxAge=2592000)](https://gitter.im/apacman/Lobby)
 
-**Comments:** [![AUR package](https://img.shields.io/aur/version/apacman.svg?label=AUR%20package&maxAge=2592000&style=plastic)](https://aur.archlinux.org/packages/apacman/)
+**Comments:** [![AUR package](https://img.shields.io/aur/version/apacman.svg?label=AUR%20package&style=plastic)](https://aur.archlinux.org/packages/apacman/)
 
 ------------
 
