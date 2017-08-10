@@ -1093,8 +1093,10 @@ aurmakepkg() {
     buildstatus 0
   fi
 
+  # Reparse PKGBUILD, possibly modified during build
+  parser PKGBUILD
   # Save packages
-  pkgtar=$(ls $1-*$PKGEXT 2>/dev/null | tail -n 1)
+  pkgtar=$(ls $1-$pkgver*$PKGEXT 2>/dev/null | tail -n 1)
   if [[ $pkgtar ]]; then
     [ -d $savedir ] || mkdir -p $savedir 2>/dev/null || runasroot mkdir -p $savedir
     echo -e "${COLOR5}  -> ${COLOR1}Saving package:${ENDCOLOR} ${pkgtar}"
