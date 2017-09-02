@@ -281,10 +281,11 @@ infoparser() {
 parser() {
   if [ -f "$1" ]; then
     if [[ $nosource == 1 ]]; then
-      unset pkgname pkgver pkgrel arch checkdepends makedepends depends
+      unset pkgname pkgver pkgrel arch checkdepends makedepends depends epoch
       pkgname=$(grep -o "^pkgname=\S*" "$1" | awk -F = '{print $2}' | tr -dc 'a-z0-9-_.\n');
       pkgver=$(grep -o "^pkgver=\S*" "$1" | awk -F = '{print $2}' | tr -dc 'a-z0-9-_.\n');
       pkgrel=$(grep -o "^pkgrel=\S*" "$1" | awk -F = '{print $2}' | tr -dc 'a-z0-9-_.\n');
+      epoch=$(grep -o "^epoch=\S*" "$1" | awk -F = '{print $2}' | tr -dc 'a-z0-9-_.\n');
       _arch=$(grep "^arch=" "$1" | awk -F = '{print $2}' | tr -dc 'a-z0-9-_. \n');
       _checkdepends=$(grep "^checkdepends=" "$1" | awk -F = '{print $2}' | tr -dc 'a-z0-9-_. \n');
       _makedepends=$(grep "^makedepends=" "$1" | awk -F = '{print $2}' | tr -dc 'a-z0-9-_. \n');
@@ -1093,8 +1094,11 @@ aurmakepkg() {
     buildstatus 0
   fi
 
+  # Reparse PKGBUILD, possibly modified during build
+  parser PKGBUILD
   # Save packages
-  pkgtar=$(ls $1-*$PKGEXT 2>/dev/null | tail -n 1)
+  [ ${epoch} ] && epoch=${epoch}:
+  pkgtar=$(ls $1-${epoch}${pkgver}*${PKGEXT} 2>/dev/null | tail -n 1)
   if [[ $pkgtar ]]; then
     [ -d $savedir ] || mkdir -p $savedir 2>/dev/null || runasroot mkdir -p $savedir
     echo -e "${COLOR5}  -> ${COLOR1}Saving package:${ENDCOLOR} ${pkgtar}"
