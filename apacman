@@ -1842,7 +1842,7 @@ if [[ $option = search || $option = searchinstall ]]; then
 
   # Remove the tmpfiles
   rm -f "$tmpdir/*search" &>/dev/null
-  rm -f "$tmpdir/search.result" &>/dev/null
+  rm -f "$tmpdir/search.results" &>/dev/null
   rm -f "$tmpdir/packages.lst" &>/dev/null
   exit
 fi
